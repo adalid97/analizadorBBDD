@@ -12,7 +12,9 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -29,7 +31,6 @@ import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import exceptions.ExcepcionPersonalizada;
 
@@ -52,6 +53,10 @@ public class App extends JFrame {
 	final TextArea textPane = new TextArea();
 	final JRadioButton oracle = new JRadioButton("OracleDataBase");
 	final JRadioButton sqlServer = new JRadioButton("SQL-Server");
+	private JMenuItem mntmNewMenuItem_2;
+	private JMenuItem mntmNewMenuItem_3;
+	private JMenuItem mntmNewMenuItem_4;
+	private JMenuItem mntmNewMenuItem_5;
 
 	public App() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -70,8 +75,6 @@ public class App extends JFrame {
 				if (resultadoConexion == true) {
 
 					JFileChooser fileChooser = new JFileChooser();
-					FileNameExtensionFilter filter = new FileNameExtensionFilter("txt", "TXT");
-					fileChooser.setFileFilter(filter);
 					int seleccion = fileChooser.showSaveDialog(null);
 					if (seleccion == JFileChooser.APPROVE_OPTION) {
 						File ficheroSeleccionado = fileChooser.getSelectedFile();
@@ -113,9 +116,7 @@ public class App extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 
 				JFileChooser fileChooser = new JFileChooser();
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("txt", "TXT");
-				fileChooser.setFileFilter(filter);
-				int seleccion = fileChooser.showSaveDialog(null);
+				int seleccion = fileChooser.showOpenDialog(null);
 				if (seleccion == JFileChooser.APPROVE_OPTION) {
 					File fichero = fileChooser.getSelectedFile();
 					Scanner s = null;
@@ -151,6 +152,78 @@ public class App extends JFrame {
 			}
 		});
 		mnNewMenu.add(mntmNewMenuItem_1);
+
+		JMenu mnNewMenu_1 = new JMenu("Datos");
+		menuBar.add(mnNewMenu_1);
+
+		mntmNewMenuItem_2 = new JMenuItem("Mostrar Datos");
+		mntmNewMenuItem_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				panel = "";
+				ConexionSQLServer conn = new ConexionSQLServer(usuario.getText(),
+						String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
+
+				if (conn.conectar() != null) {
+					String sqlTablas = "SELECT CAST(table_name as varchar)  FROM INFORMATION_SCHEMA.TABLES ORDER BY 1";
+
+					Statement statement = null;
+					try {
+						statement = conn.conectar().createStatement();
+						ResultSet result = statement.executeQuery(sqlTablas);
+
+//						while (result.next()) {
+//							for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
+//
+//								panel += result.getString(x) + "\t";
+//
+//							panel += "\n";
+//						}
+
+						ArrayList<String> tablas = new ArrayList<String>();
+						while (result.next()) {
+
+							for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
+
+								tablas.add(result.getString(x) + "");
+
+						}
+
+						for (int i = 0; i < tablas.size(); i++) {
+							String sqlColumnas = "SELECT COLUMN_NAME,DATA_TYPE, CHARACTER_MAXIMUM_LENGTH\r\n"
+									+ "FROM Information_Schema.Columns\r\n" + "WHERE TABLE_NAME = '" + tablas.get(i)
+									+ "';";
+
+							ResultSet result1 = statement.executeQuery(sqlColumnas);
+
+							panel += "\n\t" + tablas.get(i) + "\n";
+							while (result1.next()) {
+								for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
+
+									panel += result1.getString(x) + "\t";
+
+								panel += "\n";
+							}
+
+						}
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+
+				}
+				textPane.setText(panel);
+			}
+
+		});
+		mnNewMenu_1.add(mntmNewMenuItem_2);
+
+		mntmNewMenuItem_3 = new JMenuItem("Guardar Datos");
+		mnNewMenu_1.add(mntmNewMenuItem_3);
+
+		mntmNewMenuItem_4 = new JMenuItem("Cargar Datos");
+		mnNewMenu_1.add(mntmNewMenuItem_4);
+
+		mntmNewMenuItem_5 = new JMenuItem("Comparar Datos con...");
+		mnNewMenu_1.add(mntmNewMenuItem_5);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -264,16 +337,10 @@ public class App extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 
 				panel = "";
-				String user, pass, h, p, b;
-				user = usuario.getText();
-				pass = String.valueOf(contraseña.getPassword());
-				h = host.getText();
-				p = port.getText();
-				b = bd.getText();
-
 				if (validarCampos() == true) {
 					if (oracle.isSelected()) {
-						ConexionOracleDatabase conn = new ConexionOracleDatabase(user, pass, h, p, b);
+						ConexionOracleDatabase conn = new ConexionOracleDatabase(usuario.getText(),
+								String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
 
 						if (conn.conectar() != null) {
 							panel = "Conexion exitosa!";
@@ -285,11 +352,13 @@ public class App extends JFrame {
 							}
 
 						} else {
-							panel += "No se pudo realizar la conexión TCP/IP al host " + h + ", puerto " + p;
+							panel += "No se pudo realizar la conexión TCP/IP al host " + host.getText() + ", puerto "
+									+ port.getText();
 
 						}
 					} else if (sqlServer.isSelected()) {
-						ConexionSQLServer conn = new ConexionSQLServer(user, pass, h, p, b);
+						ConexionSQLServer conn = new ConexionSQLServer(usuario.getText(),
+								String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
 
 						if (conn.conectar() != null) {
 							panel = "Conexion exitosa!";
@@ -302,7 +371,8 @@ public class App extends JFrame {
 
 						} else {
 
-							panel += "No se pudo realizar la conexión TCP/IP al host " + h + ", puerto " + p;
+							panel += "No se pudo realizar la conexión TCP/IP al host " + host.getText() + ", puerto "
+									+ port.getText();
 						}
 					}
 				}
@@ -399,5 +469,4 @@ public class App extends JFrame {
 		return resultado;
 
 	}
-
 }

@@ -24,7 +24,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/sqljdbc_6.0/esn/jre8/sqljdbc42.jar"/>
-	<classpathentry kind="lib" path="C:/Users/jadal/Downloads/ojdbc8.jar"/>
+	<classpathentry kind="lib" path="C:/ojdbc8.jar"/>
 	<classpathentry kind="lib" path="jgoodies-forms-1.8.0.jar" sourcepath="jgoodies-forms-1.8.0-sources.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
