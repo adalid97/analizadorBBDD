@@ -3,7 +3,7 @@ package com.proyectoConexionBBDD;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.SystemColor;
-import java.awt.TextArea;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
@@ -29,7 +29,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 
 import exceptions.ExcepcionPersonalizada;
@@ -50,15 +52,19 @@ public class App extends JFrame {
 	private JMenu mnNewMenu;
 	private JMenuItem mntmNewMenuItem;
 	private Boolean resultadoConexion = false;
-	final TextArea textPane = new TextArea();
+
 	final JRadioButton oracle = new JRadioButton("OracleDataBase");
 	final JRadioButton sqlServer = new JRadioButton("SQL-Server");
 	private JMenuItem mntmNewMenuItem_2;
 	private JMenuItem mntmNewMenuItem_3;
 	private JMenuItem mntmNewMenuItem_4;
 	private JMenuItem mntmNewMenuItem_5;
+	private JTextPane textPane;
+	private JScrollPane scrollPane;
 
 	public App() {
+		setIconImage(Toolkit.getDefaultToolkit().getImage("C:\\Users\\jadal\\OneDrive\\Imágenes\\50.png"));
+		setFont(new Font("Arial", Font.PLAIN, 12));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 682, 600);
 
@@ -160,60 +166,125 @@ public class App extends JFrame {
 		mntmNewMenuItem_2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				panel = "";
-				ConexionSQLServer conn = new ConexionSQLServer(usuario.getText(),
-						String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
 
-				if (conn.conectar() != null) {
-					String sqlTablas = "SELECT CAST(table_name as varchar)  FROM INFORMATION_SCHEMA.TABLES ORDER BY 1";
+				if (oracle.isSelected()) {
+					ConexionOracleDatabase connOracle = new ConexionOracleDatabase(usuario.getText(),
+							String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
 
-					Statement statement = null;
-					try {
-						statement = conn.conectar().createStatement();
-						ResultSet result = statement.executeQuery(sqlTablas);
+					if (connOracle.conectar() != null) {
 
-//						while (result.next()) {
-//							for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
-//
-//								panel += result.getString(x) + "\t";
-//
-//							panel += "\n";
-//						}
+						String sqlTablas = "select table_name from user_tables order by table_name";
 
-						ArrayList<String> tablas = new ArrayList<String>();
-						while (result.next()) {
+						Statement statement = null;
+						try {
+							statement = connOracle.conectar().createStatement();
+							ResultSet result = statement.executeQuery(sqlTablas);
 
-							for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
+							ArrayList<String> tablas = new ArrayList<String>();
+							while (result.next()) {
 
-								tablas.add(result.getString(x) + "");
+								for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
 
-						}
+									tablas.add(result.getString(x) + "");
 
-						for (int i = 0; i < tablas.size(); i++) {
-							String sqlColumnas = "SELECT COLUMN_NAME,DATA_TYPE, CHARACTER_MAXIMUM_LENGTH\r\n"
-									+ "FROM Information_Schema.Columns\r\n" + "WHERE TABLE_NAME = '" + tablas.get(i)
-									+ "';";
-
-							ResultSet result1 = statement.executeQuery(sqlColumnas);
-
-							panel += "\n\t" + tablas.get(i) + "\n";
-							while (result1.next()) {
-								for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
-
-									panel += result1.getString(x) + "\t";
-
-								panel += "\n";
 							}
 
+							System.out.println(tablas.get(1));
+
+							for (int i = 0; i < tablas.size(); i++) {
+								String sqlColumnas = "SELECT column_name \"Name\",   concat(concat(concat(data_type,'('),data_length),')') \"Type\"\r\n"
+										+ "FROM user_tab_columns\r\n" + "WHERE table_name='" + tablas.get(i) + "'";
+
+								ResultSet result1 = statement.executeQuery(sqlColumnas);
+
+								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
+								while (result1.next()) {
+									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
+
+										panel += result1.getString(x) + "&emsp;";
+
+									panel += "<br>";
+								}
+
+							}
+						} catch (SQLException e) {
+							e.printStackTrace();
 						}
-					} catch (SQLException e) {
-						e.printStackTrace();
+
+					} else {
+						panel = "<p style=\"text-align:center; color:red\">Debes establecer primero una conexión.</p>";
 					}
 
 				}
+				if (sqlServer.isSelected()) {
+
+					ConexionSQLServer connSql = new ConexionSQLServer(usuario.getText(),
+							String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
+
+					if (connSql.conectar() != null) {
+
+						String sqlTablas = "SELECT CAST(table_name as varchar)  FROM INFORMATION_SCHEMA.TABLES ORDER BY 1";
+
+						Statement statement = null;
+						try {
+							statement = connSql.conectar().createStatement();
+							ResultSet result = statement.executeQuery(sqlTablas);
+
+							ArrayList<String> tablas = new ArrayList<String>();
+							while (result.next()) {
+
+								for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
+
+									tablas.add(result.getString(x) + "");
+
+							}
+
+							for (int i = 0; i < tablas.size(); i++) {
+								String sqlColumnas = "SELECT COLUMN_NAME,DATA_TYPE, CHARACTER_MAXIMUM_LENGTH\r\n"
+										+ "FROM Information_Schema.Columns\r\n" + "WHERE TABLE_NAME = '" + tablas.get(i)
+										+ "';";
+
+								String sqlPK = "SELECT column_name as PRIMARYKEYCOLUMN FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS "
+										+ "AS TC INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KU ON "
+										+ "TC.CONSTRAINT_TYPE = 'PRIMARY KEY' AND TC.CONSTRAINT_NAME = KU.CONSTRAINT_NAME AND "
+										+ "KU.table_name='" + tablas.get(i)
+										+ "' ORDER BY KU.TABLE_NAME, KU.ORDINAL_POSITION;";
+
+								ResultSet result1 = statement.executeQuery(sqlColumnas);
+
+								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
+								while (result1.next()) {
+									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
+
+										panel += result1.getString(x) + "&emsp;";
+
+									panel += "\n<br>";
+								}
+
+								ResultSet result2 = statement.executeQuery(sqlPK);
+								while (result2.next()) {
+									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
+
+										panel += "<strong>" + result2.getString(x) + "</strong>";
+
+									panel += "\n<br>";
+								}
+
+							}
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+
+					} else {
+						panel = "<p style=\"text-align:center; color:red\">Debes establecer primero una conexión.</p>";
+					}
+				}
+
 				textPane.setText(panel);
 			}
 
 		});
+
 		mnNewMenu_1.add(mntmNewMenuItem_2);
 
 		mntmNewMenuItem_3 = new JMenuItem("Guardar Datos");
@@ -228,29 +299,24 @@ public class App extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		setContentPane(contentPane);
-		contentPane.setLayout(null);
 
 		JLabel lblNewLabel = new JLabel("Usuario:");
 		lblNewLabel.setBounds(150, 45, 88, 14);
-		contentPane.add(lblNewLabel);
 
 		JLabel lblNewLabel_1 = new JLabel("Contraseña:");
 		lblNewLabel_1.setBounds(363, 45, 86, 14);
-		contentPane.add(lblNewLabel_1);
 
 		JLabel lblNewLabel_2 = new JLabel("Host:");
 		lblNewLabel_2.setBounds(123, 84, 46, 14);
-		contentPane.add(lblNewLabel_2);
 
 		JLabel lblNewLabel_3 = new JLabel("Port:");
 		lblNewLabel_3.setBounds(256, 84, 46, 14);
-		contentPane.add(lblNewLabel_3);
 
 		JLabel lblNewLabel_5 = new JLabel("DataBase:");
 		lblNewLabel_5.setBounds(392, 84, 72, 14);
-		contentPane.add(lblNewLabel_5);
 
 		host = new JTextField();
+		host.setBounds(159, 81, 79, 20);
 		host.addKeyListener(new KeyAdapter() {
 			// Al presionar Enter llama al botón conectar
 			@Override
@@ -259,11 +325,10 @@ public class App extends JFrame {
 					conectar.doClick();
 			}
 		});
-		host.setBounds(159, 81, 79, 20);
-		contentPane.add(host);
 		host.setColumns(10);
 
 		port = new JTextField();
+		port.setBounds(298, 81, 79, 20);
 		port.addKeyListener(new KeyAdapter() {
 			// Al presionar Enter llama al botón conectar
 			@Override
@@ -272,11 +337,10 @@ public class App extends JFrame {
 					conectar.doClick();
 			}
 		});
-		port.setBounds(298, 81, 79, 20);
-		contentPane.add(port);
 		port.setColumns(10);
 
 		bd = new JTextField();
+		bd.setBounds(467, 81, 79, 20);
 		bd.addKeyListener(new KeyAdapter() {
 			// Al presionar Enter llama al botón conectar
 			@Override
@@ -285,10 +349,9 @@ public class App extends JFrame {
 					conectar.doClick();
 			}
 		});
-		bd.setBounds(467, 81, 79, 20);
-		contentPane.add(bd);
 		bd.setColumns(10);
 		arquitectura.add(oracle);
+		oracle.setBounds(218, 7, 140, 23);
 		oracle.setSelected(true);
 		oracle.addKeyListener(new KeyAdapter() {
 			// Al presionar Enter llama al botón conectar
@@ -301,10 +364,9 @@ public class App extends JFrame {
 		oracle.addFocusListener(new FocusAdapter() {
 
 		});
-		oracle.setBounds(218, 7, 140, 23);
-		contentPane.add(oracle);
 
 		arquitectura.add(sqlServer);
+		sqlServer.setBounds(380, 7, 109, 23);
 		sqlServer.addKeyListener(new KeyAdapter() {
 			// Al presionar Enter llama al botón conectar
 			@Override
@@ -313,25 +375,82 @@ public class App extends JFrame {
 					conectar.doClick();
 			}
 		});
-		sqlServer.setBounds(380, 7, 109, 23);
-		contentPane.add(sqlServer);
-
-		textPane.setBounds(10, 176, 649, 307);
-		contentPane.add(textPane);
 
 		validar = new JLabel("Por favor, rellena todos los campos");
+		validar.setBounds(249, 156, 200, 14);
 		validar.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		validar.setForeground(new Color(255, 0, 0));
 		validar.setBackground(new Color(255, 0, 0));
-		validar.setBounds(249, 156, 200, 14);
-		contentPane.add(validar);
 		validar.setVisible(false);
 
 		conectar = new JButton("Conectar");
+		conectar.setBounds(283, 121, 109, 31);
+		botonConectar();
 
+		JButton Salir = new JButton("Salir");
+		Salir.setBounds(570, 506, 89, 23);
+		Salir.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				System.exit(0);
+			}
+		});
+
+		contraseña = new JPasswordField();
+		contraseña.setBounds(439, 42, 86, 20);
+		contraseña.addKeyListener(new KeyAdapter() {
+			// Al presionar Enter llama al botón conectar
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER)
+					conectar.doClick();
+			}
+		});
+
+		usuario = new JTextField();
+		usuario.setBounds(222, 42, 105, 20);
+		usuario.addKeyListener(new KeyAdapter() {
+			// Al presionar Enter llama al botón conectar
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER)
+					conectar.doClick();
+			}
+		});
+
+		JPanel panel = new JPanel();
+		panel.setBounds(10, 33, 649, 80);
+		panel.setBackground(new Color(255, 192, 203));
+		contentPane.setLayout(null);
+		contentPane.add(oracle);
+		contentPane.add(sqlServer);
+		contentPane.add(lblNewLabel);
+		contentPane.add(usuario);
+		contentPane.add(lblNewLabel_1);
+		contentPane.add(lblNewLabel_2);
+		contentPane.add(port);
+		contentPane.add(lblNewLabel_3);
+		contentPane.add(lblNewLabel_5);
+		contentPane.add(bd);
+		contentPane.add(host);
+		contentPane.add(contraseña);
+		contentPane.add(panel);
+		contentPane.add(conectar);
+		contentPane.add(validar);
+		contentPane.add(Salir);
+
+		scrollPane = new JScrollPane();
+		scrollPane.setBounds(10, 178, 649, 317);
+		contentPane.add(scrollPane);
+
+		textPane = new JTextPane();
+		textPane.setContentType("text/html");
+		scrollPane.setViewportView(textPane);
+
+	}
+
+	public void botonConectar() {
 		conectar.setForeground(SystemColor.windowText);
 		conectar.setBackground(new Color(255, 255, 255));
-		conectar.setBounds(283, 121, 109, 31);
 		conectar.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent arg0) {
@@ -380,46 +499,6 @@ public class App extends JFrame {
 				textPane.setText(panel);
 			}
 		});
-		contentPane.add(conectar);
-
-		JButton Salir = new JButton("Salir");
-		Salir.setBounds(570, 506, 89, 23);
-		Salir.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				System.exit(0);
-			}
-		});
-		contentPane.add(Salir);
-
-		contraseña = new JPasswordField();
-		contraseña.addKeyListener(new KeyAdapter() {
-			// Al presionar Enter llama al botón conectar
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-					conectar.doClick();
-			}
-		});
-		contraseña.setBounds(439, 42, 86, 20);
-		contentPane.add(contraseña);
-
-		usuario = new JTextField();
-		usuario.addKeyListener(new KeyAdapter() {
-			// Al presionar Enter llama al botón conectar
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-					conectar.doClick();
-			}
-		});
-		usuario.setBounds(222, 42, 105, 20);
-		contentPane.add(usuario);
-
-		JPanel panel = new JPanel();
-		panel.setBackground(new Color(255, 192, 203));
-		panel.setBounds(10, 33, 649, 80);
-		contentPane.add(panel);
-
 	}
 
 	public void validar() {
@@ -469,4 +548,5 @@ public class App extends JFrame {
 		return resultado;
 
 	}
+
 }

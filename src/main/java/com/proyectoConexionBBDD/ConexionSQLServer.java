@@ -23,6 +23,10 @@ public class ConexionSQLServer {
 		this.bd = bd;
 	}
 
+	public ConexionSQLServer() {
+		super();
+	}
+
 	public String getUsuario() {
 		return usuario;
 	}

@@ -22,6 +22,10 @@ public class ConexionOracleDatabase {
 		this.bd = bd;
 	}
 
+	public ConexionOracleDatabase() {
+		super();
+	}
+
 	public String getUsuario() {
 		return usuario;
 	}
