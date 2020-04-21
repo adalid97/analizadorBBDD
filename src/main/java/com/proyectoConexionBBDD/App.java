@@ -47,11 +47,11 @@ public class App extends JFrame {
 	private JPasswordField contraseña;
 	private JTextField usuario;
 	private final ButtonGroup arquitectura = new ButtonGroup();
-	private JLabel validar;
 	private String panel = "";
 	private JMenu mnNewMenu;
 	private JMenuItem mntmNewMenuItem;
 	private Boolean resultadoConexion = false;
+	private JTextPane textPane;
 
 	final JRadioButton oracle = new JRadioButton("OracleDataBase");
 	final JRadioButton sqlServer = new JRadioButton("SQL-Server");
@@ -59,7 +59,6 @@ public class App extends JFrame {
 	private JMenuItem mntmNewMenuItem_3;
 	private JMenuItem mntmNewMenuItem_4;
 	private JMenuItem mntmNewMenuItem_5;
-	private JTextPane textPane;
 	private JScrollPane scrollPane;
 
 	public App() {
@@ -100,7 +99,7 @@ public class App extends JFrame {
 
 							fichero.close();
 
-							panel = "Se han exportado los datos correctamente.";
+							panel = "<p style=\"text-align:center; color:green\">Se han exportado los datos correctamente.</p>";
 
 						} catch (IOException e) {
 							panel = "Error al exportar los datos. Error: " + e.getMessage();
@@ -109,7 +108,7 @@ public class App extends JFrame {
 					}
 
 				} else {
-					panel = "Por favor, establece una conexión y vuelve a intentarlo.";
+					panel = "<p style=\"text-align:center; color:red\">Por favor, establece una conexión y vuelve a intentarlo.</p>";
 				}
 
 				textPane.setText(panel);
@@ -189,22 +188,68 @@ public class App extends JFrame {
 
 							}
 
-							System.out.println(tablas.get(1));
-
 							for (int i = 0; i < tablas.size(); i++) {
 								String sqlColumnas = "SELECT column_name \"Name\",   concat(concat(concat(data_type,'('),data_length),')') \"Type\"\r\n"
 										+ "FROM user_tab_columns\r\n" + "WHERE table_name='" + tablas.get(i) + "'";
 
+								String sqlPK = " select column_name from user_cons_columns ucc join user_constraints uc on ucc.constraint_name=uc.constraint_name where uc.constraint_type='P' and uc.table_name='"
+										+ tablas.get(i) + "'";
+
+								String sqlFK = "select C.NAME INDEX2, B.NAME RELACION from SYS.CDEF$ t,SYS.OBJ$ O,SYS.OBJ$ B,SYS.CON$ C WHERE T.ROBJ# IS NOT NULL AND T.OBJ# = O.OBJ# AND T.ROBJ# = B.OBJ# AND T.CON# = C.CON# AND O.NAME = UPPER('"
+										+ tablas.get(i) + "')";
+
+								String sqlTrigger = "select trigger_name, triggering_event, table_name from ALL_TRIGGERS WHERE TABLE_NAME = '"
+										+ tablas.get(i) + "'";
+
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
 								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
+								panel += "<table>";
 								while (result1.next()) {
+									panel += "<tr>";
 									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
 
-										panel += result1.getString(x) + "&emsp;";
+										panel += "<td>" + result1.getString(x) + "&emsp;&emsp;&emsp;</td>";
 
-									panel += "<br>";
+									panel += "</tr>";
 								}
+								panel += "</table>";
+
+								ResultSet result2 = statement.executeQuery(sqlPK);
+								panel += "<table>";
+								while (result2.next()) {
+									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
+									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
+
+										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
+
+									panel += "</tr>";
+								}
+								panel += "</table>";
+
+								ResultSet result3 = statement.executeQuery(sqlFK);
+								panel += "<table>";
+								while (result3.next()) {
+									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
+									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++)
+
+										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
+
+									panel += "</tr>";
+								}
+								panel += "</table>";
+
+								ResultSet result4 = statement.executeQuery(sqlTrigger);
+								panel += "<table>";
+								while (result4.next()) {
+									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
+									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++)
+
+										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
+
+									panel += "</tr>";
+								}
+								panel += "</table>";
 
 							}
 						} catch (SQLException e) {
@@ -250,25 +295,45 @@ public class App extends JFrame {
 										+ "KU.table_name='" + tablas.get(i)
 										+ "' ORDER BY KU.TABLE_NAME, KU.ORDINAL_POSITION;";
 
+								String sqlFK = "SELECT OBJECT_NAME(f.constid) AS 'FKName', c.name AS 'ColName' FROM sysforeignkeys f INNER JOIN syscolumns c ON f.fkeyid = c.id AND f.fkey = c.colid WHERE fkeyid = OBJECT_ID('"
+										+ tablas.get(i) + "')";
+
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
-								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
+								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2> <table>";
 								while (result1.next()) {
+									panel += "<tr>";
 									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
 
-										panel += result1.getString(x) + "&emsp;";
+										panel += "<td>" + result1.getString(x) + "&emsp;&emsp;&emsp;</td>";
 
-									panel += "\n<br>";
+									panel += "</tr>";
 								}
+								panel += "</table>";
 
 								ResultSet result2 = statement.executeQuery(sqlPK);
+								panel += "<table>";
 								while (result2.next()) {
+									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
 									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
 
-										panel += "<strong>" + result2.getString(x) + "</strong>";
+										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
 
-									panel += "\n<br>";
+									panel += "</tr>";
 								}
+								panel += "</table>";
+
+								ResultSet result3 = statement.executeQuery(sqlFK);
+								panel += "<table>";
+								while (result3.next()) {
+									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
+									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++)
+
+										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
+
+									panel += "</tr>";
+								}
+								panel += "</table>";
 
 							}
 						} catch (SQLException e) {
@@ -376,19 +441,12 @@ public class App extends JFrame {
 			}
 		});
 
-		validar = new JLabel("Por favor, rellena todos los campos");
-		validar.setBounds(249, 156, 200, 14);
-		validar.setFont(new Font("Tahoma", Font.PLAIN, 11));
-		validar.setForeground(new Color(255, 0, 0));
-		validar.setBackground(new Color(255, 0, 0));
-		validar.setVisible(false);
-
 		conectar = new JButton("Conectar");
 		conectar.setBounds(283, 121, 109, 31);
 		botonConectar();
 
 		JButton Salir = new JButton("Salir");
-		Salir.setBounds(570, 506, 89, 23);
+		Salir.setBounds(567, 506, 89, 23);
 		Salir.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				System.exit(0);
@@ -418,7 +476,7 @@ public class App extends JFrame {
 		});
 
 		JPanel panel = new JPanel();
-		panel.setBounds(10, 33, 649, 80);
+		panel.setBounds(10, 33, 646, 80);
 		panel.setBackground(new Color(255, 192, 203));
 		contentPane.setLayout(null);
 		contentPane.add(oracle);
@@ -435,14 +493,14 @@ public class App extends JFrame {
 		contentPane.add(contraseña);
 		contentPane.add(panel);
 		contentPane.add(conectar);
-		contentPane.add(validar);
 		contentPane.add(Salir);
 
 		scrollPane = new JScrollPane();
-		scrollPane.setBounds(10, 178, 649, 317);
+		scrollPane.setBounds(10, 158, 646, 340);
 		contentPane.add(scrollPane);
 
 		textPane = new JTextPane();
+		textPane.setEditable(false);
 		textPane.setContentType("text/html");
 		scrollPane.setViewportView(textPane);
 
@@ -462,17 +520,18 @@ public class App extends JFrame {
 								String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
 
 						if (conn.conectar() != null) {
-							panel = "Conexion exitosa!";
+							panel = "<p style=\"text-align:center; color:green\">¡Conectado correctamente!</p>";
 							resultadoConexion = true;
 							try {
-								panel += "\n\n\n\n" + "Version Oracle DataBase instalada: \n" + conn.consultaVersion();
+								panel += "<br><br>" + "<strong>Version Oracle DataBase instalada:</strong> <br>"
+										+ conn.consultaVersion();
 							} catch (SQLException e) {
 
 							}
 
 						} else {
-							panel += "No se pudo realizar la conexión TCP/IP al host " + host.getText() + ", puerto "
-									+ port.getText();
+							panel += "<p style=\"text-align:center; color:red\">No se pudo realizar la conexión TCP/IP al host "
+									+ host.getText() + ", puerto " + port.getText() + ".</p>";
 
 						}
 					} else if (sqlServer.isSelected()) {
@@ -480,18 +539,19 @@ public class App extends JFrame {
 								String.valueOf(contraseña.getPassword()), host.getText(), port.getText(), bd.getText());
 
 						if (conn.conectar() != null) {
-							panel = "Conexion exitosa!";
+							panel = "<p style=\"text-align:center; color:green\">¡Conectado correctamente!</p>";
 							resultadoConexion = true;
 							try {
-								panel += "\n\n\n\n" + "Version SQL-Server instalada: \n" + conn.consultaVersion();
+								panel += "<br><br>" + "<strong>Version SQL-Server instalada: </strong><br>"
+										+ conn.consultaVersion();
 							} catch (SQLException e) {
 
 							}
 
 						} else {
 
-							panel += "No se pudo realizar la conexión TCP/IP al host " + host.getText() + ", puerto "
-									+ port.getText();
+							panel += "<p style=\"text-align:center; color:red\">No se pudo realizar la conexión TCP/IP al host "
+									+ host.getText() + ", puerto " + port.getText() + ".</p>";
 						}
 					}
 				}
@@ -505,12 +565,9 @@ public class App extends JFrame {
 		if (host.getText().equals("") || usuario.getText().equals("")
 				|| String.valueOf(contraseña.getPassword()).equals("") || port.getText().equals("")
 				|| bd.getText().equals("")) {
-			validar.setVisible(true);
 
-			throw new ExcepcionPersonalizada("· Por favor, rellena todos los campos");
-
-		} else {
-			validar.setVisible(false);
+			throw new ExcepcionPersonalizada(
+					"<p style=\"text-align:center; color:red\">Por favor, rellena todos los campos.</p>");
 		}
 	}
 
@@ -534,7 +591,8 @@ public class App extends JFrame {
 
 			try {
 				if (portNumeric(port.getText()) == false) {
-					throw new ExcepcionPersonalizada("· El puerto debe de ser un valor numérico");
+					throw new ExcepcionPersonalizada(
+							"<p style=\"text-align:center; color:red\">El puerto debe de ser un valor numérico.</p>");
 				}
 			} catch (ExcepcionPersonalizada e) {
 				panel += e.getMessage();
@@ -548,5 +606,4 @@ public class App extends JFrame {
 		return resultado;
 
 	}
-
 }
