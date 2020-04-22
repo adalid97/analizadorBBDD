@@ -9,7 +9,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -60,6 +62,7 @@ public class App extends JFrame {
 	private JMenuItem mntmNewMenuItem_4;
 	private JMenuItem mntmNewMenuItem_5;
 	private JScrollPane scrollPane;
+	private Boolean datosOk = false;
 
 	public App() {
 		setIconImage(Toolkit.getDefaultToolkit().getImage("C:\\Users\\jadal\\OneDrive\\Imágenes\\50.png"));
@@ -252,10 +255,12 @@ public class App extends JFrame {
 								panel += "</table>";
 
 							}
+
 						} catch (SQLException e) {
 							e.printStackTrace();
 						}
 
+						datosOk = true;
 					} else {
 						panel = "<p style=\"text-align:center; color:red\">Debes establecer primero una conexión.</p>";
 					}
@@ -298,6 +303,9 @@ public class App extends JFrame {
 								String sqlFK = "SELECT OBJECT_NAME(f.constid) AS 'FKName', c.name AS 'ColName' FROM sysforeignkeys f INNER JOIN syscolumns c ON f.fkeyid = c.id AND f.fkey = c.colid WHERE fkeyid = OBJECT_ID('"
 										+ tablas.get(i) + "')";
 
+								String sqlTrigger = "SELECT sysobjects.name AS trigger_name, OBJECT_NAME(parent_obj) AS table_name FROM sysobjects INNER JOIN sys.tables t ON sysobjects.parent_obj = t.object_id INNER JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE sysobjects.type = 'TR' AND OBJECT_NAME(parent_obj) = '"
+										+ tablas.get(i) + "'";
+
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
 								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2> <table>";
@@ -335,6 +343,18 @@ public class App extends JFrame {
 								}
 								panel += "</table>";
 
+								ResultSet result4 = statement.executeQuery(sqlTrigger);
+								panel += "<table>";
+								while (result4.next()) {
+									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
+									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++)
+
+										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
+
+									panel += "</tr>";
+								}
+								panel += "</table>";
+
 							}
 						} catch (SQLException e) {
 							e.printStackTrace();
@@ -343,6 +363,7 @@ public class App extends JFrame {
 					} else {
 						panel = "<p style=\"text-align:center; color:red\">Debes establecer primero una conexión.</p>";
 					}
+					datosOk = true;
 				}
 
 				textPane.setText(panel);
@@ -352,10 +373,68 @@ public class App extends JFrame {
 
 		mnNewMenu_1.add(mntmNewMenuItem_2);
 
+		// GUARDAD DATOS
+
 		mntmNewMenuItem_3 = new JMenuItem("Guardar Datos");
+		mntmNewMenuItem_3.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+
+				if (datosOk) {
+					JFileChooser fileChooser = new JFileChooser();
+					int seleccion = fileChooser.showSaveDialog(null);
+					if (seleccion == JFileChooser.APPROVE_OPTION) {
+						File ficheroSeleccionado = fileChooser.getSelectedFile();
+						FileWriter fichero = null;
+						try {
+							fichero = new FileWriter(ficheroSeleccionado);
+
+							fichero.write(panel);
+
+							fichero.close();
+
+							panel = "<p style=\"text-align:center; color:green\">Se han exportado los datos correctamente.</p>";
+
+						} catch (IOException e) {
+							panel = "Error al exportar los datos. Error: " + e.getMessage();
+						}
+
+					}
+				} else {
+					panel = "<p style=\"text-align:center; color:red\">Debes mostrar primero los datos.</p>";
+				}
+				textPane.setText(panel);
+			}
+		});
 		mnNewMenu_1.add(mntmNewMenuItem_3);
 
 		mntmNewMenuItem_4 = new JMenuItem("Cargar Datos");
+		mntmNewMenuItem_4.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				JFileChooser fileChooser = new JFileChooser();
+				int seleccion = fileChooser.showOpenDialog(null);
+				if (seleccion == JFileChooser.APPROVE_OPTION) {
+					File fichero = fileChooser.getSelectedFile();
+					panel = "";
+
+					try {
+						String cadena;
+						FileReader f = new FileReader(fichero);
+						BufferedReader b = new BufferedReader(f);
+						while ((cadena = b.readLine()) != null) {
+							panel += cadena;
+						}
+						b.close();
+
+					} catch (Exception ex) {
+					}
+
+				}
+
+				textPane.setText(panel);
+
+			}
+		});
 		mnNewMenu_1.add(mntmNewMenuItem_4);
 
 		mntmNewMenuItem_5 = new JMenuItem("Comparar Datos con...");
