@@ -582,7 +582,16 @@ public class App extends JFrame {
 		textPane.setEditable(false);
 		textPane.setContentType("text/html");
 		scrollPane.setViewportView(textPane);
+	}
 
+	public void validar() {
+		if (host.getText().equals("") || usuario.getText().equals("")
+				|| String.valueOf(contraseña.getPassword()).equals("") || port.getText().equals("")
+				|| bd.getText().equals("")) {
+
+			throw new ExcepcionPersonalizada(
+					"<p style=\"text-align:center; color:red\">Por favor, rellena todos los campos.</p>");
+		}
 	}
 
 	public void botonConectar() {
@@ -638,16 +647,6 @@ public class App extends JFrame {
 				textPane.setText(panel);
 			}
 		});
-	}
-
-	public void validar() {
-		if (host.getText().equals("") || usuario.getText().equals("")
-				|| String.valueOf(contraseña.getPassword()).equals("") || port.getText().equals("")
-				|| bd.getText().equals("")) {
-
-			throw new ExcepcionPersonalizada(
-					"<p style=\"text-align:center; color:red\">Por favor, rellena todos los campos.</p>");
-		}
 	}
 
 	public Boolean portNumeric(String port) {
