@@ -10,7 +10,9 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -50,6 +52,7 @@ public class App extends JFrame {
 	private JTextField usuario;
 	private final ButtonGroup arquitectura = new ButtonGroup();
 	private String panel = "";
+	private String panel2 = "";
 	private JMenu mnNewMenu;
 	private JMenuItem mntmNewMenuItem;
 	private Boolean resultadoConexion = false;
@@ -308,14 +311,19 @@ public class App extends JFrame {
 
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
-								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2> <table>";
+								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2><table>";
+								panel2 += "db." + tablas.get(i) + "\n";
+
 								while (result1.next()) {
 									panel += "<tr>";
-									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
+									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++) {
 
 										panel += "<td>" + result1.getString(x) + "&emsp;&emsp;&emsp;</td>";
+										panel2 += result1.getString(x) + " ";
+									}
 
 									panel += "</tr>";
+									panel2 += "\n";
 								}
 								panel += "</table>";
 
@@ -323,11 +331,13 @@ public class App extends JFrame {
 								panel += "<table>";
 								while (result2.next()) {
 									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
-									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
+									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++) {
 
 										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
-
+										panel2 += result2.getString(x) + " ";
+									}
 									panel += "</tr>";
+									panel2 += "\n";
 								}
 								panel += "</table>";
 
@@ -335,11 +345,15 @@ public class App extends JFrame {
 								panel += "<table>";
 								while (result3.next()) {
 									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
-									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++)
+									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++) {
 
 										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
+										panel2 += result3.getString(x) + " ";
+
+									}
 
 									panel += "</tr>";
+									panel2 += "\n";
 								}
 								panel += "</table>";
 
@@ -347,11 +361,15 @@ public class App extends JFrame {
 								panel += "<table>";
 								while (result4.next()) {
 									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
-									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++)
+									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++) {
 
 										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
 
+										panel2 += result4.getString(x) + " ";
+									}
+
 									panel += "</tr>";
+									panel2 += "\n";
 								}
 								panel += "</table>";
 
@@ -386,9 +404,13 @@ public class App extends JFrame {
 						File ficheroSeleccionado = fileChooser.getSelectedFile();
 						FileWriter fichero = null;
 						try {
+//							panel.replaceAll(
+//									"<h2 style=\"background-color:#FDEDEC;\">|</h2>|<table>|<td>|<tr>|&emsp;|</table>",
+//									"");
+
 							fichero = new FileWriter(ficheroSeleccionado);
 
-							fichero.write(panel);
+							fichero.write(panel2);
 
 							fichero.close();
 
@@ -438,6 +460,93 @@ public class App extends JFrame {
 		mnNewMenu_1.add(mntmNewMenuItem_4);
 
 		mntmNewMenuItem_5 = new JMenuItem("Comparar Datos con...");
+		mntmNewMenuItem_5.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+
+				JFileChooser fileChooser = new JFileChooser();
+				int seleccion = fileChooser.showOpenDialog(null);
+				if (seleccion == JFileChooser.APPROVE_OPTION) {
+					File fichero = fileChooser.getSelectedFile();
+
+					panel = "";
+					ArrayList<String> contenidoArchivo = new ArrayList<String>();
+					Scanner sc;
+					try {
+						sc = new Scanner(fichero);
+
+						while (sc.hasNextLine()) {
+							contenidoArchivo.add(sc.nextLine());
+						}
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+
+					}
+
+					ArrayList<String> contenidoArchivo2 = new ArrayList<String>();
+
+					try {
+
+						File temp = File.createTempFile("archivo", ".tmp");
+
+						temp.deleteOnExit();
+
+						BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+						bw.write(panel2);
+						bw.close();
+
+						sc = new Scanner(temp);
+
+						while (sc.hasNextLine()) {
+							int x = 0;
+
+							if (panel2.startsWith("db.")) {
+
+							}
+							contenidoArchivo2.add(sc.nextLine());
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+					for (int x = 0; x < contenidoArchivo2.size(); x++) {
+						System.out.println(contenidoArchivo2.get(x));
+					}
+
+					System.out.println("\n\n\n\n\n=======================\n\n\n\n\n\n");
+					for (int x = 0; x < contenidoArchivo.size(); x++) {
+						System.out.println(contenidoArchivo.get(x));
+					}
+
+					System.out.println(contenidoArchivo.get(1));
+					System.out.println(contenidoArchivo2.get(1));
+
+					ArrayList<String> newList = new ArrayList<String>();
+					for (String element : contenidoArchivo2) {
+						if (!contenidoArchivo.contains(element)) {
+							newList.add(element);
+						}
+					}
+					System.out.println(newList);
+
+//					List<String> lista = contenidoArchivo2.stream().filter(f -> !contenidoArchivo.contains(f))
+//							.collect(Collectors.toList());
+//					System.out.println(lista);
+
+//					try {
+//						String cadena;
+//						FileReader f = new FileReader(fichero);
+//						BufferedReader b = new BufferedReader(f);
+//						while ((cadena = b.readLine()) != null) {
+//							panel += cadena;
+//						}
+//						b.close();
+//
+//					} catch (Exception ex) {
+//					}
+
+				}
+			}
+		});
 		mnNewMenu_1.add(mntmNewMenuItem_5);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
