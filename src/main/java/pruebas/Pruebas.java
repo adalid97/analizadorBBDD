@@ -1,8 +1,6 @@
 package pruebas;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Pruebas {
 
@@ -26,12 +24,6 @@ public class Pruebas {
 		listaB.add("ocho");
 		listaB.add("nueve");
 		listaB.add("diez");
-		// Aqui por ejemplo debería recuperar un tercer `ArrayList` con los valores:
-		// Seis, Siete, ocho, nueve,diez
-		// Los valores no necesariamente vendrán en el mismo orden en el archivo.
-
-		List<String> lista = listaB.stream().filter(f -> !listaA.contains(f)).collect(Collectors.toList());
-		System.out.println(lista);
 
 	}
 

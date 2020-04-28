@@ -20,7 +20,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -37,6 +41,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
+
+import com.github.difflib.DiffUtils;
+import com.github.difflib.UnifiedDiffUtils;
+import com.github.difflib.algorithm.DiffException;
+import com.github.difflib.patch.Patch;
+import com.github.difflib.patch.PatchFailedException;
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
 
 import exceptions.ExcepcionPersonalizada;
 
@@ -467,7 +479,7 @@ public class App extends JFrame {
 				int seleccion = fileChooser.showOpenDialog(null);
 				if (seleccion == JFileChooser.APPROVE_OPTION) {
 					File fichero = fileChooser.getSelectedFile();
-
+					String panel3 = "";
 					panel = "";
 					ArrayList<String> contenidoArchivo = new ArrayList<String>();
 					Scanner sc;
@@ -514,7 +526,7 @@ public class App extends JFrame {
 
 					System.out.println("\n\n\n\n\n=======================\n\n\n\n\n\n");
 					for (int x = 0; x < contenidoArchivo.size(); x++) {
-						System.out.println(contenidoArchivo.get(x));
+						panel3 += contenidoArchivo.get(x) + "\n";
 					}
 
 					System.out.println(contenidoArchivo.get(1));
@@ -527,6 +539,24 @@ public class App extends JFrame {
 						}
 					}
 					System.out.println(newList);
+
+					final String regex = "(?<=table\\.)(?<nombreTabla>\\w+)";
+					final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
+					final Matcher matcher = pattern.matcher(panel2);
+					int counter = 0;
+					while (matcher.find())
+						counter++;
+
+					ArrayList<Object>[] tablas = new ArrayList[counter];
+					int i = 0;
+
+					while (matcher.find()) {
+						tablas[i++] = new ArrayList<Object>();
+					}
+
+					for (int j = 0; j < tablas.length; j++) {
+						System.out.println(tablas[j]);
+					}
 
 //					List<String> lista = contenidoArchivo2.stream().filter(f -> !contenidoArchivo.contains(f))
 //							.collect(Collectors.toList());
@@ -543,6 +573,56 @@ public class App extends JFrame {
 //
 //					} catch (Exception ex) {
 //					}
+
+					List<String> text1 = Arrays.asList("this is a test", "a test");
+					List<String> text2 = Arrays.asList("this is a testfile", "a test");
+
+					// generating diff information.
+					Patch<String> diff = null;
+					try {
+						diff = DiffUtils.diff(text1, text2);
+					} catch (DiffException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					// generating unified diff format
+					List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff("original-file.txt", "new-file.txt",
+							text1, diff, 0);
+
+					unifiedDiff.forEach(System.out::println);
+
+					// importing unified diff format from file or here from memory to a Patch
+					Patch<String> importedPatch = UnifiedDiffUtils.parseUnifiedDiff(unifiedDiff);
+
+					// apply patch to original list
+					List<String> patchedText = null;
+					try {
+						patchedText = DiffUtils.patch(text1, importedPatch);
+					} catch (PatchFailedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					System.out.println(panel);
+
+					System.out.println(patchedText);
+
+					DiffRowGenerator generator = DiffRowGenerator.create().showInlineDiffs(true).inlineDiffByWord(true)
+							.oldTag(f -> "~").newTag(f -> "**").build();
+					List<DiffRow> rows = null;
+					try {
+						rows = generator.generateDiffRows(Arrays.asList(panel3), Arrays.asList(panel2));
+					} catch (DiffException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					System.out.println("|original|new|");
+					System.out.println("|--------|---|");
+					for (DiffRow row : rows) {
+						System.out.println("|" + row.getOldLine() + "|" + row.getNewLine() + "|");
+					}
 
 				}
 			}
