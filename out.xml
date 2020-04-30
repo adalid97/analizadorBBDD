@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example>
+    <person>
+        <name>
+            <first>Dan</first>
+            <last>Smith</last>
+        </name>
+        <age unit="years">23</age>
+        <fav_color>green</fav_color>
+    </person>
+    <person>
+        <name>
+            <first>Bob</first>
+            <last>Autry</last>
+        </name>
+        <age unit="months">3</age>
+        <fav_color>N/A</fav_color>
+    </person>
+</example>

@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,7 +22,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,15 +42,10 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 
-import com.github.difflib.DiffUtils;
-import com.github.difflib.UnifiedDiffUtils;
-import com.github.difflib.algorithm.DiffException;
-import com.github.difflib.patch.Patch;
-import com.github.difflib.patch.PatchFailedException;
-import com.github.difflib.text.DiffRow;
-import com.github.difflib.text.DiffRowGenerator;
-
 import exceptions.ExcepcionPersonalizada;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Serializer;
 
 public class App extends JFrame {
 
@@ -190,6 +185,8 @@ public class App extends JFrame {
 
 					if (connOracle.conectar() != null) {
 
+						Element root = new Element("infoBaseDatos");
+
 						String sqlTablas = "select table_name from user_tables order by table_name";
 
 						Statement statement = null;
@@ -199,79 +196,127 @@ public class App extends JFrame {
 
 							ArrayList<String> tablas = new ArrayList<String>();
 							while (result.next()) {
-
 								for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
-
 									tablas.add(result.getString(x) + "");
-
 							}
 
 							for (int i = 0; i < tablas.size(); i++) {
-								String sqlColumnas = "SELECT column_name \"Name\",   concat(concat(concat(data_type,'('),data_length),')') \"Type\"\r\n"
-										+ "FROM user_tab_columns\r\n" + "WHERE table_name='" + tablas.get(i) + "'";
-
-								String sqlPK = " select column_name from user_cons_columns ucc join user_constraints uc on ucc.constraint_name=uc.constraint_name where uc.constraint_type='P' and uc.table_name='"
+								String sqlColumnas = "select column_name, data_type, data_length from all_tab_columns where table_name = '"
 										+ tablas.get(i) + "'";
 
-								String sqlFK = "select C.NAME INDEX2, B.NAME RELACION from SYS.CDEF$ t,SYS.OBJ$ O,SYS.OBJ$ B,SYS.CON$ C WHERE T.ROBJ# IS NOT NULL AND T.OBJ# = O.OBJ# AND T.ROBJ# = B.OBJ# AND T.CON# = C.CON# AND O.NAME = UPPER('"
-										+ tablas.get(i) + "')";
+//								String sqlPK = " select column_name from user_cons_columns ucc join user_constraints uc on ucc.constraint_name=uc.constraint_name where uc.constraint_type='P' and uc.table_name='"
+//										+ tablas.get(i) + "'";
+//
+//								String sqlFK = "select C.NAME INDEX2, B.NAME RELACION from SYS.CDEF$ t,SYS.OBJ$ O,SYS.OBJ$ B,SYS.CON$ C WHERE T.ROBJ# IS NOT NULL AND T.OBJ# = O.OBJ# AND T.ROBJ# = B.OBJ# AND T.CON# = C.CON# AND O.NAME = UPPER('"
+//										+ tablas.get(i) + "')";
+//
+//								String sqlTrigger = "select trigger_name, triggering_event, table_name from ALL_TRIGGERS WHERE TABLE_NAME = '"
+//										+ tablas.get(i) + "'";
 
-								String sqlTrigger = "select trigger_name, triggering_event, table_name from ALL_TRIGGERS WHERE TABLE_NAME = '"
-										+ tablas.get(i) + "'";
+								Element tablaElement = new Element("tabla");
+								Element nombreTablaElement = new Element("nombreTabla");
+								tablaElement.appendChild(nombreTablaElement);
+								nombreTablaElement.appendChild(tablas.get(i));
 
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
-								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
-								panel += "<table>";
+//								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
+//								panel += "<table>";
+								ArrayList<Tabla> coleccionTablas = new ArrayList();
 								while (result1.next()) {
-									panel += "<tr>";
-									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++)
+									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++) {
 
-										panel += "<td>" + result1.getString(x) + "&emsp;&emsp;&emsp;</td>";
+										Tabla tabla = new Tabla(result1.getString(x), result1.getString(++x),
+												result1.getString(++x));
+										coleccionTablas.add(tabla);
+									}
 
-									panel += "</tr>";
+//									panel += "</tr>";
 								}
-								panel += "</table>";
 
-								ResultSet result2 = statement.executeQuery(sqlPK);
-								panel += "<table>";
-								while (result2.next()) {
-									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
-									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
+								for (Tabla tab : coleccionTablas) {
 
-										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
+									Element columnaElement = new Element("columna");
+									Element campoElement = new Element("campo");
+									Element tipoElement = new Element("tipo");
+									Element valorElement = new Element("valor");
 
-									panel += "</tr>";
+									// add value to columna
+									campoElement.appendChild(tab.getCampo());
+									tipoElement.appendChild(tab.getTipo());
+									valorElement.appendChild(tab.getValor());
+
+									// add names to columna
+									columnaElement.appendChild(campoElement);
+									columnaElement.appendChild(tipoElement);
+									columnaElement.appendChild(valorElement);
+
+									tablaElement.appendChild(columnaElement);
+
 								}
-								panel += "</table>";
 
-								ResultSet result3 = statement.executeQuery(sqlFK);
-								panel += "<table>";
-								while (result3.next()) {
-									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
-									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++)
+								root.appendChild(tablaElement);
 
-										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
+//								panel += "</table>";
 
-									panel += "</tr>";
-								}
-								panel += "</table>";
-
-								ResultSet result4 = statement.executeQuery(sqlTrigger);
-								panel += "<table>";
-								while (result4.next()) {
-									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
-									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++)
-
-										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
-
-									panel += "</tr>";
-								}
-								panel += "</table>";
+//								ResultSet result2 = statement.executeQuery(sqlPK);
+//								panel += "<table>";
+//								while (result2.next()) {
+//									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
+//									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
+//
+//										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
+//
+//									panel += "</tr>";
+//								}
+//								panel += "</table>";
+//
+//								ResultSet result3 = statement.executeQuery(sqlFK);
+//								panel += "<table>";
+//								while (result3.next()) {
+//									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
+//									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++)
+//
+//										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
+//
+//									panel += "</tr>";
+//								}
+//								panel += "</table>";
+//
+//								ResultSet result4 = statement.executeQuery(sqlTrigger);
+//								panel += "<table>";
+//								while (result4.next()) {
+//									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
+//									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++)
+//
+//										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
+//
+//									panel += "</tr>";
+//								}
+//								panel += "</table>";
 
 							}
 
+							Document doc = new Document(root);
+
+							// the file it will be stored in
+							File file = new File("jejeFje.xml");
+							if (!file.exists()) {
+								file.createNewFile();
+							}
+
+							// get a file output stream ready
+							FileOutputStream fileOutputStream = new FileOutputStream(file);
+
+							// use the serializer class to write it all
+							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
+							serializer.setIndent(4);
+							serializer.write(doc);
+
 						} catch (SQLException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 
@@ -558,71 +603,9 @@ public class App extends JFrame {
 						System.out.println(tablas[j]);
 					}
 
-//					List<String> lista = contenidoArchivo2.stream().filter(f -> !contenidoArchivo.contains(f))
-//							.collect(Collectors.toList());
-//					System.out.println(lista);
-
-//					try {
-//						String cadena;
-//						FileReader f = new FileReader(fichero);
-//						BufferedReader b = new BufferedReader(f);
-//						while ((cadena = b.readLine()) != null) {
-//							panel += cadena;
-//						}
-//						b.close();
-//
-//					} catch (Exception ex) {
-//					}
-
-					List<String> text1 = Arrays.asList("this is a test", "a test");
-					List<String> text2 = Arrays.asList("this is a testfile", "a test");
-
-					// generating diff information.
-					Patch<String> diff = null;
-					try {
-						diff = DiffUtils.diff(text1, text2);
-					} catch (DiffException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					// generating unified diff format
-					List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff("original-file.txt", "new-file.txt",
-							text1, diff, 0);
-
-					unifiedDiff.forEach(System.out::println);
-
-					// importing unified diff format from file or here from memory to a Patch
-					Patch<String> importedPatch = UnifiedDiffUtils.parseUnifiedDiff(unifiedDiff);
-
-					// apply patch to original list
-					List<String> patchedText = null;
-					try {
-						patchedText = DiffUtils.patch(text1, importedPatch);
-					} catch (PatchFailedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					System.out.println(panel);
-
-					System.out.println(patchedText);
-
-					DiffRowGenerator generator = DiffRowGenerator.create().showInlineDiffs(true).inlineDiffByWord(true)
-							.oldTag(f -> "~").newTag(f -> "**").build();
-					List<DiffRow> rows = null;
-					try {
-						rows = generator.generateDiffRows(Arrays.asList(panel3), Arrays.asList(panel2));
-					} catch (DiffException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					System.out.println("|original|new|");
-					System.out.println("|--------|---|");
-					for (DiffRow row : rows) {
-						System.out.println("|" + row.getOldLine() + "|" + row.getNewLine() + "|");
-					}
+					String cadena = "Hola|Stackoverflow|en|español";
+					String[] parts = cadena.split("\\|");
+					System.out.println(Arrays.asList(parts));
 
 				}
 			}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infoBaseDatos>
+    <tabla>
+        <nombreTabla>AYUNTAMIENTO</nombreTabla>
+        <columna>
+            <campo>idAyuntamiento</campo>
+            <tipo>NUMBER</tipo>
+            <valor>3</valor>
+        </columna>
+        <columna>
+            <campo>nombre</campo>
+            <tipo>VARCHAR2</tipo>
+            <valor>50</valor>
+        </columna>
+    </tabla>
+</infoBaseDatos>
