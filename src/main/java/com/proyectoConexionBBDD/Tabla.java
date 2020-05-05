@@ -4,6 +4,7 @@ public class Tabla {
 	private String campo;
 	private String tipo;
 	private String valor;
+	private String pk;
 
 	public Tabla() {
 		super();
@@ -14,6 +15,19 @@ public class Tabla {
 		this.campo = campo;
 		this.tipo = tipo;
 		this.valor = valor;
+	}
+
+	public Tabla(String pk) {
+		super();
+		this.pk = pk;
+	}
+
+	public String getPk() {
+		return pk;
+	}
+
+	public void setPk(String pk) {
+		this.pk = pk;
 	}
 
 	public String getCampo() {

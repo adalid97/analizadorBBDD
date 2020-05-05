@@ -9,12 +9,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -43,9 +41,13 @@ import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 
 import exceptions.ExcepcionPersonalizada;
+import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
+import nu.xom.Elements;
+import nu.xom.ParsingException;
 import nu.xom.Serializer;
+import nu.xom.ValidityException;
 
 public class App extends JFrame {
 
@@ -64,6 +66,8 @@ public class App extends JFrame {
 	private JMenuItem mntmNewMenuItem;
 	private Boolean resultadoConexion = false;
 	private JTextPane textPane;
+	FileOutputStream fileOutputStream;
+	Document doc;
 
 	final JRadioButton oracle = new JRadioButton("OracleDataBase");
 	final JRadioButton sqlServer = new JRadioButton("SQL-Server");
@@ -204,25 +208,24 @@ public class App extends JFrame {
 								String sqlColumnas = "select column_name, data_type, data_length from all_tab_columns where table_name = '"
 										+ tablas.get(i) + "'";
 
-//								String sqlPK = " select column_name from user_cons_columns ucc join user_constraints uc on ucc.constraint_name=uc.constraint_name where uc.constraint_type='P' and uc.table_name='"
-//										+ tablas.get(i) + "'";
-//
-//								String sqlFK = "select C.NAME INDEX2, B.NAME RELACION from SYS.CDEF$ t,SYS.OBJ$ O,SYS.OBJ$ B,SYS.CON$ C WHERE T.ROBJ# IS NOT NULL AND T.OBJ# = O.OBJ# AND T.ROBJ# = B.OBJ# AND T.CON# = C.CON# AND O.NAME = UPPER('"
-//										+ tablas.get(i) + "')";
-//
+								String sqlPK = " select column_name from user_cons_columns ucc join user_constraints uc on ucc.constraint_name=uc.constraint_name where uc.constraint_type='P' and uc.table_name='"
+										+ tablas.get(i) + "'";
+
+								String sqlFK = "select C.NAME INDEX2, B.NAME RELACION from SYS.CDEF$ t,SYS.OBJ$ O,SYS.OBJ$ B,SYS.CON$ C WHERE T.ROBJ# IS NOT NULL AND T.OBJ# = O.OBJ# AND T.ROBJ# = B.OBJ# AND T.CON# = C.CON# AND O.NAME = UPPER('"
+										+ tablas.get(i) + "')";
+
 //								String sqlTrigger = "select trigger_name, triggering_event, table_name from ALL_TRIGGERS WHERE TABLE_NAME = '"
 //										+ tablas.get(i) + "'";
 
 								Element tablaElement = new Element("tabla");
 								Element nombreTablaElement = new Element("nombreTabla");
+
 								tablaElement.appendChild(nombreTablaElement);
 								nombreTablaElement.appendChild(tablas.get(i));
 
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
-//								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2>";
-//								panel += "<table>";
-								ArrayList<Tabla> coleccionTablas = new ArrayList();
+								ArrayList<Tabla> coleccionTablas = new ArrayList<Tabla>();
 								while (result1.next()) {
 									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++) {
 
@@ -231,7 +234,6 @@ public class App extends JFrame {
 										coleccionTablas.add(tabla);
 									}
 
-//									panel += "</tr>";
 								}
 
 								for (Tabla tab : coleccionTablas) {
@@ -255,11 +257,48 @@ public class App extends JFrame {
 
 								}
 
+								ArrayList<Tabla> coleccionPK = new ArrayList<Tabla>();
+								ResultSet result2 = statement.executeQuery(sqlPK);
+								while (result2.next()) {
+									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++) {
+
+										Tabla pk = new Tabla(result2.getString(x));
+										coleccionPK.add(pk);
+										coleccionTablas.add(pk);
+									}
+
+								}
+
+								for (Tabla pk : coleccionPK) {
+									Element primaryKeyElement = new Element("primaryKey");
+									Element pkElement = new Element("nombre");
+									pkElement.appendChild(pk.getPk());
+									primaryKeyElement.appendChild(pkElement);
+									tablaElement.appendChild(primaryKeyElement);
+								}
+
+								ArrayList<Tabla> coleccionFK = new ArrayList<Tabla>();
+								ResultSet result3 = statement.executeQuery(sqlPK);
+								while (result3.next()) {
+									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++) {
+
+										Tabla fk = new Tabla(result3.getString(x));
+										coleccionPK.add(fk);
+										coleccionTablas.add(fk);
+									}
+
+								}
+
+								for (Tabla fk : coleccionPK) {
+									Element foreignKeyElement = new Element("foreignKey");
+									Element fkElement = new Element("nombre");
+									fkElement.appendChild(fk.getPk());
+									foreignKeyElement.appendChild(fkElement);
+									tablaElement.appendChild(foreignKeyElement);
+								}
+
 								root.appendChild(tablaElement);
 
-//								panel += "</table>";
-
-//								ResultSet result2 = statement.executeQuery(sqlPK);
 //								panel += "<table>";
 //								while (result2.next()) {
 //									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
@@ -297,25 +336,115 @@ public class App extends JFrame {
 
 							}
 
-							Document doc = new Document(root);
+							doc = new Document(root);
 
-							// the file it will be stored in
-							File file = new File("jejeFje.xml");
-							if (!file.exists()) {
-								file.createNewFile();
-							}
+							File tempFile = File.createTempFile("ficherotemporal.xml", null);
+
+							tempFile.deleteOnExit();
 
 							// get a file output stream ready
-							FileOutputStream fileOutputStream = new FileOutputStream(file);
+							fileOutputStream = new FileOutputStream(tempFile);
 
 							// use the serializer class to write it all
 							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
 							serializer.setIndent(4);
 							serializer.write(doc);
 
+//							Document doc = new Document(root);
+//
+//							// the file it will be stored in
+//							File file = new File("outw.xml");
+//							if (!file.exists()) {
+//								file.createNewFile();
+//							}
+//
+//							// get a file output stream ready
+//							FileOutputStream fileOutputStream = new FileOutputStream(file);
+//
+//							// use the serializer class to write it all
+//							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
+//							serializer.setIndent(4);
+//							serializer.write(doc);
+
+							// -----------------------------------------------------------------------------------------------------
+							// Lectura
+							// -----------------------------------------------------------------------------------------------------
+
+							Builder builder = new Builder();
+							Document docReader = builder.build(tempFile);
+
+							Element rootReader = docReader.getRootElement();
+
+							Elements tabla = rootReader.getChildElements("tabla");
+
+							for (int q = 0; q < tabla.size(); q++) {
+								Element table = tabla.get(q);
+
+								Elements columnaElement = table.getChildElements("columna");
+
+								Element nombreTablaElement = table.getFirstChildElement("nombreTabla");
+								String nombreTabla;
+								nombreTabla = nombreTablaElement.getValue();
+								panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + "</h2>";
+
+								for (int j = 0; j < columnaElement.size(); j++) {
+									Element columnas = columnaElement.get(j);
+
+									Element campoElement = columnas.getFirstChildElement("campo");
+									Element tipoElement = columnas.getFirstChildElement("tipo");
+									Element valorElement = columnas.getFirstChildElement("valor");
+
+									String campo, tipo, valor;
+
+									try {
+
+										campo = campoElement.getValue();
+										tipo = tipoElement.getValue();
+										valor = valorElement.getValue();
+
+										panel += "campo: " + campo + "<br>tipo: " + tipo + "<br>valor: " + valor
+												+ "<br><br>";
+
+									} catch (NullPointerException ex) {
+										ex.printStackTrace();
+									} catch (NumberFormatException ex) {
+										ex.printStackTrace();
+									}
+								}
+
+								Elements primaryKeyElement = table.getChildElements("primaryKey");
+
+								for (int j = 0; j < primaryKeyElement.size(); j++) {
+									Element pks = primaryKeyElement.get(j);
+
+									Element pkElement = pks.getFirstChildElement("nombre");
+
+									panel += "Primary Key: " + pkElement.getValue() + "<br>";
+
+								}
+
+								Elements foreignKeyElement = table.getChildElements("foreignKey");
+
+								for (int j = 0; j < foreignKeyElement.size(); j++) {
+									Element fks = foreignKeyElement.get(j);
+
+									Element fkElement = fks.getFirstChildElement("nombre");
+
+									panel += "Foreign Key: " + fkElement.getValue() + "<br>";
+
+								}
+
+							}
+
 						} catch (SQLException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (ValidityException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (ParsingException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
@@ -459,17 +588,12 @@ public class App extends JFrame {
 					int seleccion = fileChooser.showSaveDialog(null);
 					if (seleccion == JFileChooser.APPROVE_OPTION) {
 						File ficheroSeleccionado = fileChooser.getSelectedFile();
-						FileWriter fichero = null;
 						try {
-//							panel.replaceAll(
-//									"<h2 style=\"background-color:#FDEDEC;\">|</h2>|<table>|<td>|<tr>|&emsp;|</table>",
-//									"");
+							FileOutputStream fileOutputStream = new FileOutputStream(ficheroSeleccionado);
 
-							fichero = new FileWriter(ficheroSeleccionado);
-
-							fichero.write(panel2);
-
-							fichero.close();
+							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
+							serializer.setIndent(4);
+							serializer.write(doc);
 
 							panel = "<p style=\"text-align:center; color:green\">Se han exportado los datos correctamente.</p>";
 
@@ -495,23 +619,45 @@ public class App extends JFrame {
 				if (seleccion == JFileChooser.APPROVE_OPTION) {
 					File fichero = fileChooser.getSelectedFile();
 					panel = "";
-
+					// builder builds xml data
+					Builder builder = new Builder();
+					Document docRead = null;
 					try {
-						String cadena;
-						FileReader f = new FileReader(fichero);
-						BufferedReader b = new BufferedReader(f);
-						while ((cadena = b.readLine()) != null) {
-							panel += cadena;
-						}
-						b.close();
-
-					} catch (Exception ex) {
+						docRead = builder.build(fichero);
+					} catch (ParsingException | IOException e1) {
+						e1.printStackTrace();
 					}
 
+					Element rootReader = docRead.getRootElement();
+					Elements tabla = rootReader.getChildElements("tabla");
+
+					for (int q = 0; q < tabla.size(); q++) {
+						Element table = tabla.get(q);
+						Elements columnaElement = table.getChildElements("columna");
+
+						Element nombreTablaElement = table.getFirstChildElement("nombreTabla");
+						String nombreTabla;
+						nombreTabla = nombreTablaElement.getValue();
+						panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + "</h2>";
+
+						for (int j = 0; j < columnaElement.size(); j++) {
+							Element columnas = columnaElement.get(j);
+
+							Element campoElement = columnas.getFirstChildElement("campo");
+							Element tipoElement = columnas.getFirstChildElement("tipo");
+							Element valorElement = columnas.getFirstChildElement("valor");
+
+							String campo, tipo, valor;
+
+							campo = campoElement.getValue();
+							tipo = tipoElement.getValue();
+							valor = valorElement.getValue();
+
+							panel += "campo: " + campo + "<br>tipo: " + tipo + "<br>valor: " + valor + "<br><br>";
+						}
+					}
 				}
-
 				textPane.setText(panel);
-
 			}
 		});
 		mnNewMenu_1.add(mntmNewMenuItem_4);
