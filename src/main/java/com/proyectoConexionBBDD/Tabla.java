@@ -5,6 +5,8 @@ public class Tabla {
 	private String tipo;
 	private String valor;
 	private String pk;
+	private String fk;
+	private String referenciaFK;
 
 	public Tabla() {
 		super();
@@ -20,6 +22,28 @@ public class Tabla {
 	public Tabla(String pk) {
 		super();
 		this.pk = pk;
+	}
+
+	public Tabla(String fk, String referenciaFK) {
+		super();
+		this.fk = fk;
+		this.referenciaFK = referenciaFK;
+	}
+
+	public String getFk() {
+		return fk;
+	}
+
+	public void setFk(String fk) {
+		this.fk = fk;
+	}
+
+	public String getReferenciaFK() {
+		return referenciaFK;
+	}
+
+	public void setReferenciaFK(String referenciaFK) {
+		this.referenciaFK = referenciaFK;
 	}
 
 	public String getPk() {

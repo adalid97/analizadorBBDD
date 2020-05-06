@@ -47,7 +47,6 @@ import nu.xom.Element;
 import nu.xom.Elements;
 import nu.xom.ParsingException;
 import nu.xom.Serializer;
-import nu.xom.ValidityException;
 
 public class App extends JFrame {
 
@@ -68,6 +67,8 @@ public class App extends JFrame {
 	private JTextPane textPane;
 	FileOutputStream fileOutputStream;
 	Document doc;
+	Document docRead = null;
+	Element rootReader;
 
 	final JRadioButton oracle = new JRadioButton("OracleDataBase");
 	final JRadioButton sqlServer = new JRadioButton("SQL-Server");
@@ -214,8 +215,8 @@ public class App extends JFrame {
 								String sqlFK = "select C.NAME INDEX2, B.NAME RELACION from SYS.CDEF$ t,SYS.OBJ$ O,SYS.OBJ$ B,SYS.CON$ C WHERE T.ROBJ# IS NOT NULL AND T.OBJ# = O.OBJ# AND T.ROBJ# = B.OBJ# AND T.CON# = C.CON# AND O.NAME = UPPER('"
 										+ tablas.get(i) + "')";
 
-//								String sqlTrigger = "select trigger_name, triggering_event, table_name from ALL_TRIGGERS WHERE TABLE_NAME = '"
-//										+ tablas.get(i) + "'";
+								String sqlTrigger = "select trigger_name, triggering_event from ALL_TRIGGERS WHERE TABLE_NAME = '"
+										+ tablas.get(i) + "'";
 
 								Element tablaElement = new Element("tabla");
 								Element nombreTablaElement = new Element("nombreTabla");
@@ -264,7 +265,6 @@ public class App extends JFrame {
 
 										Tabla pk = new Tabla(result2.getString(x));
 										coleccionPK.add(pk);
-										coleccionTablas.add(pk);
 									}
 
 								}
@@ -278,61 +278,49 @@ public class App extends JFrame {
 								}
 
 								ArrayList<Tabla> coleccionFK = new ArrayList<Tabla>();
-								ResultSet result3 = statement.executeQuery(sqlPK);
+								ResultSet result3 = statement.executeQuery(sqlFK);
 								while (result3.next()) {
 									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++) {
 
-										Tabla fk = new Tabla(result3.getString(x));
-										coleccionPK.add(fk);
-										coleccionTablas.add(fk);
+										Tabla fk = new Tabla(result3.getString(x), result3.getString(++x));
+										coleccionFK.add(fk);
+									}
+								}
+
+								for (Tabla fk : coleccionFK) {
+									Element foreignKeyElement = new Element("foreignKey");
+									Element fkElement = new Element("nombre");
+									Element referenciaFKElement = new Element("referencia");
+									fkElement.appendChild(fk.getFk());
+									referenciaFKElement.appendChild(fk.getReferenciaFK());
+									foreignKeyElement.appendChild(fkElement);
+									foreignKeyElement.appendChild(referenciaFKElement);
+									tablaElement.appendChild(foreignKeyElement);
+								}
+
+								ArrayList<Tabla> coleccionTrigger = new ArrayList<Tabla>();
+								ResultSet result4 = statement.executeQuery(sqlTrigger);
+								while (result4.next()) {
+									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++) {
+
+										Tabla trigger = new Tabla(result4.getString(x), result4.getString(++x));
+										coleccionTrigger.add(trigger);
 									}
 
 								}
 
-								for (Tabla fk : coleccionPK) {
-									Element foreignKeyElement = new Element("foreignKey");
+								for (Tabla tr : coleccionTrigger) {
+									Element triggerElement = new Element("trigger");
 									Element fkElement = new Element("nombre");
-									fkElement.appendChild(fk.getPk());
-									foreignKeyElement.appendChild(fkElement);
-									tablaElement.appendChild(foreignKeyElement);
+									Element referenciaFKElement = new Element("tipo");
+									fkElement.appendChild(tr.getFk());
+									referenciaFKElement.appendChild(tr.getReferenciaFK());
+									triggerElement.appendChild(fkElement);
+									triggerElement.appendChild(referenciaFKElement);
+									tablaElement.appendChild(triggerElement);
 								}
 
 								root.appendChild(tablaElement);
-
-//								panel += "<table>";
-//								while (result2.next()) {
-//									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
-//									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++)
-//
-//										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
-//
-//									panel += "</tr>";
-//								}
-//								panel += "</table>";
-//
-//								ResultSet result3 = statement.executeQuery(sqlFK);
-//								panel += "<table>";
-//								while (result3.next()) {
-//									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
-//									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++)
-//
-//										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
-//
-//									panel += "</tr>";
-//								}
-//								panel += "</table>";
-//
-//								ResultSet result4 = statement.executeQuery(sqlTrigger);
-//								panel += "<table>";
-//								while (result4.next()) {
-//									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
-//									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++)
-//
-//										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
-//
-//									panel += "</tr>";
-//								}
-//								panel += "</table>";
 
 							}
 
@@ -352,16 +340,13 @@ public class App extends JFrame {
 
 //							Document doc = new Document(root);
 //
-//							// the file it will be stored in
 //							File file = new File("outw.xml");
 //							if (!file.exists()) {
 //								file.createNewFile();
 //							}
 //
-//							// get a file output stream ready
 //							FileOutputStream fileOutputStream = new FileOutputStream(file);
 //
-//							// use the serializer class to write it all
 //							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
 //							serializer.setIndent(4);
 //							serializer.write(doc);
@@ -373,83 +358,15 @@ public class App extends JFrame {
 							Builder builder = new Builder();
 							Document docReader = builder.build(tempFile);
 
-							Element rootReader = docReader.getRootElement();
+							rootReader = docReader.getRootElement();
+							leerDatos();
 
-							Elements tabla = rootReader.getChildElements("tabla");
-
-							for (int q = 0; q < tabla.size(); q++) {
-								Element table = tabla.get(q);
-
-								Elements columnaElement = table.getChildElements("columna");
-
-								Element nombreTablaElement = table.getFirstChildElement("nombreTabla");
-								String nombreTabla;
-								nombreTabla = nombreTablaElement.getValue();
-								panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + "</h2>";
-
-								for (int j = 0; j < columnaElement.size(); j++) {
-									Element columnas = columnaElement.get(j);
-
-									Element campoElement = columnas.getFirstChildElement("campo");
-									Element tipoElement = columnas.getFirstChildElement("tipo");
-									Element valorElement = columnas.getFirstChildElement("valor");
-
-									String campo, tipo, valor;
-
-									try {
-
-										campo = campoElement.getValue();
-										tipo = tipoElement.getValue();
-										valor = valorElement.getValue();
-
-										panel += "campo: " + campo + "<br>tipo: " + tipo + "<br>valor: " + valor
-												+ "<br><br>";
-
-									} catch (NullPointerException ex) {
-										ex.printStackTrace();
-									} catch (NumberFormatException ex) {
-										ex.printStackTrace();
-									}
-								}
-
-								Elements primaryKeyElement = table.getChildElements("primaryKey");
-
-								for (int j = 0; j < primaryKeyElement.size(); j++) {
-									Element pks = primaryKeyElement.get(j);
-
-									Element pkElement = pks.getFirstChildElement("nombre");
-
-									panel += "Primary Key: " + pkElement.getValue() + "<br>";
-
-								}
-
-								Elements foreignKeyElement = table.getChildElements("foreignKey");
-
-								for (int j = 0; j < foreignKeyElement.size(); j++) {
-									Element fks = foreignKeyElement.get(j);
-
-									Element fkElement = fks.getFirstChildElement("nombre");
-
-									panel += "Foreign Key: " + fkElement.getValue() + "<br>";
-
-								}
-
-							}
-
-						} catch (SQLException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ValidityException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ParsingException e) {
-							// TODO Auto-generated catch block
+						} catch (SQLException | IOException | ParsingException e) {
 							e.printStackTrace();
 						}
 
 						datosOk = true;
+
 					} else {
 						panel = "<p style=\"text-align:center; color:red\">Debes establecer primero una conexión.</p>";
 					}
@@ -462,6 +379,8 @@ public class App extends JFrame {
 
 					if (connSql.conectar() != null) {
 
+						Element root = new Element("infoBaseDatosSQLServer");
+
 						String sqlTablas = "SELECT CAST(table_name as varchar)  FROM INFORMATION_SCHEMA.TABLES ORDER BY 1";
 
 						Statement statement = null;
@@ -471,11 +390,8 @@ public class App extends JFrame {
 
 							ArrayList<String> tablas = new ArrayList<String>();
 							while (result.next()) {
-
 								for (int x = 1; x <= result.getMetaData().getColumnCount(); x++)
-
 									tablas.add(result.getString(x) + "");
-
 							}
 
 							for (int i = 0; i < tablas.size(); i++) {
@@ -495,78 +411,158 @@ public class App extends JFrame {
 								String sqlTrigger = "SELECT sysobjects.name AS trigger_name, OBJECT_NAME(parent_obj) AS table_name FROM sysobjects INNER JOIN sys.tables t ON sysobjects.parent_obj = t.object_id INNER JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE sysobjects.type = 'TR' AND OBJECT_NAME(parent_obj) = '"
 										+ tablas.get(i) + "'";
 
+								Element tablaElement = new Element("tabla");
+								Element nombreTablaElement = new Element("nombreTabla");
+
+								tablaElement.appendChild(nombreTablaElement);
+								nombreTablaElement.appendChild(tablas.get(i));
+
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
-								panel += "<h2 style=\"background-color:#FDEDEC;\">" + tablas.get(i) + "</h2><table>";
-								panel2 += "db." + tablas.get(i) + "\n";
-
+								ArrayList<Tabla> coleccionTablas = new ArrayList<Tabla>();
 								while (result1.next()) {
-									panel += "<tr>";
 									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++) {
 
-										panel += "<td>" + result1.getString(x) + "&emsp;&emsp;&emsp;</td>";
-										panel2 += result1.getString(x) + " ";
+										Tabla tabla = new Tabla(result1.getString(x), result1.getString(++x),
+												result1.getString(++x));
+										coleccionTablas.add(tabla);
 									}
 
-									panel += "</tr>";
-									panel2 += "\n";
 								}
-								panel += "</table>";
 
+								for (Tabla tab : coleccionTablas) {
+
+									Element columnaElement = new Element("columna");
+									Element campoElement = new Element("campo");
+									Element tipoElement = new Element("tipo");
+									Element valorElement = new Element("valor");
+
+									// add value to columna
+									campoElement.appendChild(tab.getCampo());
+									tipoElement.appendChild(tab.getTipo());
+									valorElement.appendChild(tab.getValor());
+
+									// add names to columna
+									columnaElement.appendChild(campoElement);
+									columnaElement.appendChild(tipoElement);
+									columnaElement.appendChild(valorElement);
+
+									tablaElement.appendChild(columnaElement);
+
+								}
+
+								ArrayList<Tabla> coleccionPK = new ArrayList<Tabla>();
 								ResultSet result2 = statement.executeQuery(sqlPK);
-								panel += "<table>";
 								while (result2.next()) {
-									panel += "<tr><td><strong>Primary Key:&emsp;&emsp;&emsp;</strong></td>";
 									for (int x = 1; x <= result2.getMetaData().getColumnCount(); x++) {
 
-										panel += "<td>" + result2.getString(x) + "&emsp;&emsp;&emsp;</td>";
-										panel2 += result2.getString(x) + " ";
+										Tabla pk = new Tabla(result2.getString(x));
+										coleccionPK.add(pk);
 									}
-									panel += "</tr>";
-									panel2 += "\n";
-								}
-								panel += "</table>";
 
+								}
+
+								for (Tabla pk : coleccionPK) {
+									Element primaryKeyElement = new Element("primaryKey");
+									Element pkElement = new Element("nombre");
+									pkElement.appendChild(pk.getPk());
+									primaryKeyElement.appendChild(pkElement);
+									tablaElement.appendChild(primaryKeyElement);
+								}
+
+								ArrayList<Tabla> coleccionFK = new ArrayList<Tabla>();
 								ResultSet result3 = statement.executeQuery(sqlFK);
-								panel += "<table>";
 								while (result3.next()) {
-									panel += "<tr><td><strong>Foreign Key:&emsp;&emsp;&emsp;</strong></td>";
 									for (int x = 1; x <= result3.getMetaData().getColumnCount(); x++) {
 
-										panel += result3.getString(x) + "&emsp;&emsp;&emsp;</td>";
-										panel2 += result3.getString(x) + " ";
-
+										Tabla fk = new Tabla(result3.getString(x), result3.getString(++x));
+										coleccionFK.add(fk);
 									}
-
-									panel += "</tr>";
-									panel2 += "\n";
 								}
-								panel += "</table>";
 
+								for (Tabla fk : coleccionFK) {
+									Element foreignKeyElement = new Element("foreignKey");
+									Element fkElement = new Element("nombre");
+									Element referenciaFKElement = new Element("referencia");
+									fkElement.appendChild(fk.getFk());
+									referenciaFKElement.appendChild(fk.getReferenciaFK());
+									foreignKeyElement.appendChild(fkElement);
+									foreignKeyElement.appendChild(referenciaFKElement);
+									tablaElement.appendChild(foreignKeyElement);
+								}
+
+								ArrayList<Tabla> coleccionTrigger = new ArrayList<Tabla>();
 								ResultSet result4 = statement.executeQuery(sqlTrigger);
-								panel += "<table>";
 								while (result4.next()) {
-									panel += "<tr><td><strong>Triggers:&emsp;&emsp;&emsp;</strong></td>";
 									for (int x = 1; x <= result4.getMetaData().getColumnCount(); x++) {
 
-										panel += result4.getString(x) + "&emsp;&emsp;&emsp;</td>";
-
-										panel2 += result4.getString(x) + " ";
+										Tabla trigger = new Tabla(result4.getString(x), result4.getString(++x));
+										coleccionTrigger.add(trigger);
 									}
 
-									panel += "</tr>";
-									panel2 += "\n";
 								}
-								panel += "</table>";
+
+								for (Tabla tr : coleccionTrigger) {
+									Element triggerElement = new Element("trigger");
+									Element fkElement = new Element("nombre");
+									Element referenciaFKElement = new Element("tipo");
+									fkElement.appendChild(tr.getFk());
+									referenciaFKElement.appendChild(tr.getReferenciaFK());
+									triggerElement.appendChild(fkElement);
+									triggerElement.appendChild(referenciaFKElement);
+									tablaElement.appendChild(triggerElement);
+								}
+
+								root.appendChild(tablaElement);
 
 							}
-						} catch (SQLException e) {
+
+							doc = new Document(root);
+
+							File tempFile = File.createTempFile("ficherotemporal.xml", null);
+
+							tempFile.deleteOnExit();
+
+							// get a file output stream ready
+							fileOutputStream = new FileOutputStream(tempFile);
+
+							// use the serializer class to write it all
+							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
+							serializer.setIndent(4);
+							serializer.write(doc);
+
+//							Document doc = new Document(root);
+//
+//							File file = new File("outw.xml");
+//							if (!file.exists()) {
+//								file.createNewFile();
+//							}
+//
+//							FileOutputStream fileOutputStream = new FileOutputStream(file);
+//
+//							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
+//							serializer.setIndent(4);
+//							serializer.write(doc);
+
+							// -----------------------------------------------------------------------------------------------------
+							// Lectura
+							// -----------------------------------------------------------------------------------------------------
+							Builder builder = new Builder();
+							Document docReader = builder.build(tempFile);
+
+							rootReader = docReader.getRootElement();
+							leerDatos();
+
+						} catch (SQLException | IOException | ParsingException e) {
 							e.printStackTrace();
 						}
+
+						datosOk = true;
 
 					} else {
 						panel = "<p style=\"text-align:center; color:red\">Debes establecer primero una conexión.</p>";
 					}
+
 					datosOk = true;
 				}
 
@@ -619,43 +615,17 @@ public class App extends JFrame {
 				if (seleccion == JFileChooser.APPROVE_OPTION) {
 					File fichero = fileChooser.getSelectedFile();
 					panel = "";
-					// builder builds xml data
+
 					Builder builder = new Builder();
-					Document docRead = null;
+
 					try {
 						docRead = builder.build(fichero);
 					} catch (ParsingException | IOException e1) {
 						e1.printStackTrace();
 					}
+					rootReader = docRead.getRootElement();
+					leerDatos();
 
-					Element rootReader = docRead.getRootElement();
-					Elements tabla = rootReader.getChildElements("tabla");
-
-					for (int q = 0; q < tabla.size(); q++) {
-						Element table = tabla.get(q);
-						Elements columnaElement = table.getChildElements("columna");
-
-						Element nombreTablaElement = table.getFirstChildElement("nombreTabla");
-						String nombreTabla;
-						nombreTabla = nombreTablaElement.getValue();
-						panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + "</h2>";
-
-						for (int j = 0; j < columnaElement.size(); j++) {
-							Element columnas = columnaElement.get(j);
-
-							Element campoElement = columnas.getFirstChildElement("campo");
-							Element tipoElement = columnas.getFirstChildElement("tipo");
-							Element valorElement = columnas.getFirstChildElement("valor");
-
-							String campo, tipo, valor;
-
-							campo = campoElement.getValue();
-							tipo = tipoElement.getValue();
-							valor = valorElement.getValue();
-
-							panel += "campo: " + campo + "<br>tipo: " + tipo + "<br>valor: " + valor + "<br><br>";
-						}
-					}
 				}
 				textPane.setText(panel);
 			}
@@ -1000,6 +970,86 @@ public class App extends JFrame {
 		}
 
 		return resultado;
+
+	}
+
+	public String leerDatos() {
+
+		Elements tabla = rootReader.getChildElements("tabla");
+
+		for (int q = 0; q < tabla.size(); q++) {
+			Element table = tabla.get(q);
+
+			Elements columnaElement = table.getChildElements("columna");
+
+			Element nombreTablaElement = table.getFirstChildElement("nombreTabla");
+			String nombreTabla;
+			nombreTabla = nombreTablaElement.getValue();
+			panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + "</h2>";
+
+			for (int j = 0; j < columnaElement.size(); j++) {
+				Element columnas = columnaElement.get(j);
+
+				Element campoElement = columnas.getFirstChildElement("campo");
+				Element tipoElement = columnas.getFirstChildElement("tipo");
+				Element valorElement = columnas.getFirstChildElement("valor");
+
+				String campo, tipo, valor;
+
+				try {
+
+					campo = campoElement.getValue();
+					tipo = tipoElement.getValue();
+					valor = valorElement.getValue();
+
+					panel += "campo: " + campo + "<br>tipo: " + tipo + "<br>valor: " + valor + "<br><br>";
+
+				} catch (NullPointerException ex) {
+					ex.printStackTrace();
+				} catch (NumberFormatException ex) {
+					ex.printStackTrace();
+				}
+			}
+
+			Elements primaryKeyElement = table.getChildElements("primaryKey");
+
+			for (int j = 0; j < primaryKeyElement.size(); j++) {
+				Element pks = primaryKeyElement.get(j);
+
+				Element pkElement = pks.getFirstChildElement("nombre");
+
+				panel += "Primary Key: " + pkElement.getValue() + "<br>";
+
+			}
+
+			Elements foreignKeyElement = table.getChildElements("foreignKey");
+
+			for (int j = 0; j < foreignKeyElement.size(); j++) {
+				Element fks = foreignKeyElement.get(j);
+
+				Element fkElement = fks.getFirstChildElement("nombre");
+				Element referenciaFKElement = fks.getFirstChildElement("referencia");
+
+				panel += "Nombre Foreign Key: " + fkElement.getValue() + " referencia a la tabla "
+						+ referenciaFKElement.getValue() + "<br>";
+
+			}
+
+			Elements triggerElement = table.getChildElements("trigger");
+
+			for (int j = 0; j < triggerElement.size(); j++) {
+				Element fks = triggerElement.get(j);
+
+				Element nombreTriggerElement = fks.getFirstChildElement("nombre");
+				Element referenciaFKElement = fks.getFirstChildElement("tipo");
+
+				panel += "Nombre Trigger: " + nombreTriggerElement.getValue() + " | Tipo Trigger: "
+						+ referenciaFKElement.getValue() + "<br>";
+
+			}
+
+		}
+		return panel;
 
 	}
 }
