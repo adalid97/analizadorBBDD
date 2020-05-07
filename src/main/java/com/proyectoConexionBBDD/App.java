@@ -9,9 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,10 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -636,94 +631,6 @@ public class App extends JFrame {
 		mntmNewMenuItem_5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 
-				JFileChooser fileChooser = new JFileChooser();
-				int seleccion = fileChooser.showOpenDialog(null);
-				if (seleccion == JFileChooser.APPROVE_OPTION) {
-					File fichero = fileChooser.getSelectedFile();
-					String panel3 = "";
-					panel = "";
-					ArrayList<String> contenidoArchivo = new ArrayList<String>();
-					Scanner sc;
-					try {
-						sc = new Scanner(fichero);
-
-						while (sc.hasNextLine()) {
-							contenidoArchivo.add(sc.nextLine());
-						}
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-
-					}
-
-					ArrayList<String> contenidoArchivo2 = new ArrayList<String>();
-
-					try {
-
-						File temp = File.createTempFile("archivo", ".tmp");
-
-						temp.deleteOnExit();
-
-						BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-						bw.write(panel2);
-						bw.close();
-
-						sc = new Scanner(temp);
-
-						while (sc.hasNextLine()) {
-							int x = 0;
-
-							if (panel2.startsWith("db.")) {
-
-							}
-							contenidoArchivo2.add(sc.nextLine());
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					for (int x = 0; x < contenidoArchivo2.size(); x++) {
-						System.out.println(contenidoArchivo2.get(x));
-					}
-
-					System.out.println("\n\n\n\n\n=======================\n\n\n\n\n\n");
-					for (int x = 0; x < contenidoArchivo.size(); x++) {
-						panel3 += contenidoArchivo.get(x) + "\n";
-					}
-
-					System.out.println(contenidoArchivo.get(1));
-					System.out.println(contenidoArchivo2.get(1));
-
-					ArrayList<String> newList = new ArrayList<String>();
-					for (String element : contenidoArchivo2) {
-						if (!contenidoArchivo.contains(element)) {
-							newList.add(element);
-						}
-					}
-					System.out.println(newList);
-
-					final String regex = "(?<=table\\.)(?<nombreTabla>\\w+)";
-					final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
-					final Matcher matcher = pattern.matcher(panel2);
-					int counter = 0;
-					while (matcher.find())
-						counter++;
-
-					ArrayList<Object>[] tablas = new ArrayList[counter];
-					int i = 0;
-
-					while (matcher.find()) {
-						tablas[i++] = new ArrayList<Object>();
-					}
-
-					for (int j = 0; j < tablas.length; j++) {
-						System.out.println(tablas[j]);
-					}
-
-					String cadena = "Hola|Stackoverflow|en|español";
-					String[] parts = cadena.split("\\|");
-					System.out.println(Arrays.asList(parts));
-
-				}
 			}
 		});
 		mnNewMenu_1.add(mntmNewMenuItem_5);

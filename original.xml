@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infoBaseDatosSQLServer>
+	<tabla>
+		<nombreTabla>AYUNTAMIENTO</nombreTabla>
+		<columna>
+			<campo>idAyuntamiento</campo>
+			<tipo>numeric</tipo>
+			<valor />
+		</columna>
+		<columna>
+			<campo>nombre</campo>
+			<tipo>varchar</tipo>
+			<valor>50</valor>
+		</columna>
+	</tabla>
+	<tabla>
+		<nombreTabla>LOCALIDAD</nombreTabla>
+		<columna>
+			<campo>idLocalidad</campo>
+			<tipo>numeric</tipo>
+			<valor />
+		</columna>
+		<columna>
+			<campo>nombre</campo>
+			<tipo>varchar</tipo>
+			<valor>50</valor>
+		</columna>
+	</tabla>
+</infoBaseDatosSQLServer>
