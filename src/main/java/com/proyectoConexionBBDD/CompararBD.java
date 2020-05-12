@@ -1,22 +1,33 @@
-package pruebas;
+package com.proyectoConexionBBDD;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+
+import javax.swing.JFileChooser;
 
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Elements;
 import nu.xom.ParsingException;
-import nu.xom.ValidityException;
+import pruebas.Columna;
+import pruebas.Tab;
 
-public class CompararXML {
-	public static void main(String[] args) throws ValidityException, ParsingException, IOException {
+public class CompararBD {
+
+	public String comparar(File tempFile) {
+
+		String panel = "";
 		ArrayList<Tab> nombreTablas = new ArrayList<Tab>();
-		File file = new File("original.xml");
+
 		Builder builder = new Builder();
-		Document doc = builder.build(file);
+		Document doc = null;
+		try {
+			doc = builder.build(tempFile);
+		} catch (ParsingException | IOException e) {
+			e.printStackTrace();
+		}
 
 		Element root = doc.getRootElement();
 
@@ -52,23 +63,21 @@ public class CompararXML {
 			nombreTablas.add(tabla1);
 
 		}
+//-------------------------------------------------------------------------------------------------------------
 
-		for (Tab t : nombreTablas) {
-			System.out.println(t.getNombre());
-			ArrayList<Columna> columna = t.getColumna();
-			for (int i = 0; i < columna.size(); i++) {
-				Columna c = columna.get(i);
-				System.out.println(c.getCampo());
-			}
-
-		}
-
-		System.out.println("---------------------------------.--------------------------");
+		JFileChooser fileChooser = new JFileChooser();
+		int seleccion = fileChooser.showOpenDialog(null);
+		File fichero = fileChooser.getSelectedFile();
 
 		ArrayList<Tab> nombreTablas2 = new ArrayList<Tab>();
-		File file2 = new File("response.xml");
 		Builder builder2 = new Builder();
-		Document doc2 = builder2.build(file2);
+		Document doc2 = null;
+		try {
+			doc2 = builder2.build(fichero);
+		} catch (ParsingException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		Element root2 = doc2.getRootElement();
 
@@ -105,39 +114,26 @@ public class CompararXML {
 
 		}
 
-		for (Tab t : nombreTablas2) {
-			System.out.println(t.getNombre());
-			ArrayList<Columna> columna = t.getColumna();
-			for (int i = 0; i < columna.size(); i++) {
-				Columna c = columna.get(i);
-				System.out.println(c.getCampo());
-			}
-
-		}
-
-		System.out.println("\n------\n");
-		String panel = "";
-
 		ArrayList<String> a = new ArrayList<String>();
 		for (Tab t : nombreTablas2) {
 			a.add(t.getNombre());
 		}
-		System.out.println(a);
 		for (Tab t2 : nombreTablas2) {
 
 			for (Tab t1 : nombreTablas) {
 				if (a.contains(t1.getNombre())) {
-					Boolean identica = true;
+
 					if (t2.getNombre().equals(t1.getNombre())) {
 						ArrayList<Columna> col1 = t1.getColumna();
 						ArrayList<Columna> col2 = t2.getColumna();
 
-						panel += "\nTABLA: " + t2.getNombre() + "\n";
+						panel += "<h2 style=\"background-color:#FDEDEC;\">" + t2.getNombre() + "</h2>\n";
 						ArrayList<String> nombreCol = new ArrayList<String>();
 						Columna c1 = null, c2 = null;
 						for (int j = 0; j < col1.size(); j++) {
 							nombreCol.add(col1.get(j).getCampo().toString());
 						}
+						Boolean identica = true;
 						for (int j = 0; j < col1.size() && j < col2.size(); j++) {
 
 							c1 = col1.get(j);
@@ -148,27 +144,27 @@ public class CompararXML {
 							if (existe) {
 								if (!c1.getCampo().equals(c2.getCampo())) {
 									identica = false;
-									panel += "\tEl nombre del campo " + c1.getCampo() + " cambia por " + c2.getCampo()
-											+ "\n";
+									panel += "    - El nombre del campo " + c1.getCampo() + " cambia por "
+											+ c2.getCampo() + "<br>";
 								}
 								if (!c1.getTipo().equals(c2.getTipo())) {
 									identica = false;
-									panel += "\tEl tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
-											+ " por " + c2.getTipo() + "\n";
+									panel += "    - El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
+											+ " a " + c2.getTipo() + "<br>";
 								}
 								if (!c1.getValor().equals(c2.getValor())) {
 									identica = false;
-									panel += "\tEl valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
-											+ " por " + c2.getValor() + "\n";
+									panel += "    - El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
+											+ " a " + c2.getValor() + "<br>";
 								}
 							} else {
 								j = col1.size();
 							}
 						}
 						if (identica) {
-							panel += "\tES IDÉNTICA\n";
+							panel += "ES IDÉNTICA\n";
 						} else {
-							panel += "\tLA TABLA NO ES IDÉNTICA";
+
 						}
 					}
 				} else {
@@ -177,9 +173,7 @@ public class CompararXML {
 			}
 
 		}
-
-		System.out.println(panel);
+		return panel;
 
 	}
-
 }

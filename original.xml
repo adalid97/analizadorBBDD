@@ -559,4 +559,57 @@
             <valor>22</valor>
         </columna>
     </tabla>
+    <tabla>
+        <nombreTabla>VIVIENDA2</nombreTabla>
+        <columna>
+            <campo>IDVIVIENDA</campo>
+            <tipo>NUMBER</tipo>
+            <valor>22</valor>
+        </columna>
+        <columna>
+            <campo>TIPOVIA</campo>
+            <tipo>VARCHAR2</tipo>
+            <valor>50</valor>
+        </columna>
+        <columna>
+            <campo>DIRECCION</campo>
+            <tipo>VARCHAR2</tipo>
+            <valor>50</valor>
+        </columna>
+        <columna>
+            <campo>BLOQUE</campo>
+            <tipo>CHAR</tipo>
+            <valor>1</valor>
+        </columna>
+        <columna>
+            <campo>PISO</campo>
+            <tipo>CHAR</tipo>
+            <valor>1</valor>
+        </columna>
+        <columna>
+            <campo>PUERTA</campo>
+            <tipo>CHAR</tipo>
+            <valor>1</valor>
+        </columna>
+        <columna>
+            <campo>SUPERFICIE</campo>
+            <tipo>NUMBER</tipo>
+            <valor>22</valor>
+        </columna>
+        <columna>
+            <campo>VALORSUELO</campo>
+            <tipo>NUMBER</tipo>
+            <valor>22</valor>
+        </columna>
+        <columna>
+            <campo>NUMCATASTRO</campo>
+            <tipo>NUMBER</tipo>
+            <valor>22</valor>
+        </columna>
+        <columna>
+            <campo>VALORCATASTRAL</campo>
+            <tipo>NUMBER</tipo>
+            <valor>22</valor>
+        </columna>
+    </tabla>
 </infoBaseDatos>

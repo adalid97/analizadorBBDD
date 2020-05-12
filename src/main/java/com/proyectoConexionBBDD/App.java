@@ -64,6 +64,7 @@ public class App extends JFrame {
 	Document doc;
 	Document docRead = null;
 	Element rootReader;
+	File tempFile;
 
 	final JRadioButton oracle = new JRadioButton("OracleDataBase");
 	final JRadioButton sqlServer = new JRadioButton("SQL-Server");
@@ -222,6 +223,7 @@ public class App extends JFrame {
 								ResultSet result1 = statement.executeQuery(sqlColumnas);
 
 								ArrayList<Tabla> coleccionTablas = new ArrayList<Tabla>();
+
 								while (result1.next()) {
 									for (int x = 1; x <= result1.getMetaData().getColumnCount(); x++) {
 
@@ -239,12 +241,10 @@ public class App extends JFrame {
 									Element tipoElement = new Element("tipo");
 									Element valorElement = new Element("valor");
 
-									// add value to columna
 									campoElement.appendChild(tab.getCampo());
 									tipoElement.appendChild(tab.getTipo());
 									valorElement.appendChild(tab.getValor());
 
-									// add names to columna
 									columnaElement.appendChild(campoElement);
 									columnaElement.appendChild(tipoElement);
 									columnaElement.appendChild(valorElement);
@@ -321,14 +321,12 @@ public class App extends JFrame {
 
 							doc = new Document(root);
 
-							File tempFile = File.createTempFile("ficherotemporal.xml", null);
+							tempFile = File.createTempFile("ficherotemporal.xml", null);
 
 							tempFile.deleteOnExit();
 
-							// get a file output stream ready
 							fileOutputStream = new FileOutputStream(tempFile);
 
-							// use the serializer class to write it all
 							Serializer serializer = new Serializer(fileOutputStream, "UTF-8");
 							serializer.setIndent(4);
 							serializer.write(doc);
@@ -514,7 +512,7 @@ public class App extends JFrame {
 
 							doc = new Document(root);
 
-							File tempFile = File.createTempFile("ficherotemporal.xml", null);
+							tempFile = File.createTempFile("ficherotemporal.xml", null);
 
 							tempFile.deleteOnExit();
 
@@ -630,8 +628,16 @@ public class App extends JFrame {
 		mntmNewMenuItem_5 = new JMenuItem("Comparar Datos con...");
 		mntmNewMenuItem_5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				if (datosOk) {
+					CompararBD comp = new CompararBD();
+					panel = comp.comparar(tempFile);
 
+				} else {
+					panel = "<p style=\"text-align:center; color:red\">Debes mostrar primero los datos.</p>";
+				}
+				textPane.setText(panel);
 			}
+
 		});
 		mnNewMenu_1.add(mntmNewMenuItem_5);
 		contentPane = new JPanel();
