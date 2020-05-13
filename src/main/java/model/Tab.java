@@ -1,4 +1,4 @@
-package com.proyectoConexionBBDD;
+package model;
 
 import java.util.ArrayList;
 

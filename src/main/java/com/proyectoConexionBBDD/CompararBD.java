@@ -118,12 +118,17 @@ public class CompararBD {
 		for (Tab t : nombreTablas2) {
 			a.add(t.getNombre());
 		}
+		ArrayList<String> b = new ArrayList<String>();
+		for (Tab t2 : nombreTablas) {
+			b.add(t2.getNombre());
+		}
 		for (Tab t2 : nombreTablas2) {
 
 			for (Tab t1 : nombreTablas) {
 				if (a.contains(t1.getNombre())) {
 
 					if (t2.getNombre().equals(t1.getNombre())) {
+
 						ArrayList<Columna> col1 = t1.getColumna();
 						ArrayList<Columna> col2 = t2.getColumna();
 
@@ -139,39 +144,42 @@ public class CompararBD {
 							c1 = col1.get(j);
 							c2 = col2.get(j);
 
-							boolean existe = nombreCol.contains(c2.getCampo());
-
-							if (existe) {
-								if (!c1.getCampo().equals(c2.getCampo())) {
-									identica = false;
-									panel += "    - El nombre del campo " + c1.getCampo() + " cambia por "
-											+ c2.getCampo() + "<br>";
-								}
-								if (!c1.getTipo().equals(c2.getTipo())) {
-									identica = false;
-									panel += "    - El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
-											+ " a " + c2.getTipo() + "<br>";
-								}
-								if (!c1.getValor().equals(c2.getValor())) {
-									identica = false;
-									panel += "    - El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
-											+ " a " + c2.getValor() + "<br>";
-								}
-							} else {
-								j = col1.size();
+							if (!c1.getCampo().equals(c2.getCampo())) {
+								identica = false;
+								panel += "    - El nombre del campo " + c1.getCampo() + " cambia por " + c2.getCampo()
+										+ "<br>";
 							}
+							if (!c1.getTipo().equals(c2.getTipo())) {
+								identica = false;
+								panel += "    - El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
+										+ " a " + c2.getTipo() + "<br>";
+							}
+							if (!c1.getValor().equals(c2.getValor())) {
+								identica = false;
+								panel += "    - El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
+										+ " a " + c2.getValor() + "<br>";
+							}
+
 						}
 						if (identica) {
 							panel += "ES IDÉNTICA\n";
-						} else {
-
 						}
 					}
-				} else {
-					panel += "\nTABLA: " + t1.getNombre() + "\n\tNO EXISTE LA TABLA";
 				}
 			}
 
+		}
+		for (int i = 0; i < nombreTablas2.size(); i++) {
+			if (!b.contains(nombreTablas2.get(i).getNombre())) {
+				panel += "<h2 style=\"background-color:#ABEBC6;\">" + nombreTablas2.get(i).getNombre()
+						+ "</h2>NUEVA TABLA";
+			}
+		}
+		for (int i = 0; i < nombreTablas.size(); i++) {
+			if (!a.contains(nombreTablas.get(i).getNombre())) {
+				panel += "<h2 style=\"background-color:#85C1E9;\">" + nombreTablas.get(i).getNombre()
+						+ "</h2>NO EXISTE LA TABLA";
+			}
 		}
 		return panel;
 

@@ -1,4 +1,4 @@
-package com.proyectoConexionBBDD;
+package model;
 
 public class Columna {
 	private String campo;
