@@ -144,25 +144,32 @@ public class CompararBD {
 							c1 = col1.get(j);
 							c2 = col2.get(j);
 
-							if (!c1.getCampo().equals(c2.getCampo())) {
-								identica = false;
-								panel += "    - El nombre del campo " + c1.getCampo() + " cambia por " + c2.getCampo()
-										+ "<br>";
-							}
-							if (!c1.getTipo().equals(c2.getTipo())) {
-								identica = false;
-								panel += "    - El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
-										+ " a " + c2.getTipo() + "<br>";
-							}
-							if (!c1.getValor().equals(c2.getValor())) {
-								identica = false;
-								panel += "    - El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
-										+ " a " + c2.getValor() + "<br>";
-							}
+							boolean existe = nombreCol.contains(c2.getCampo());
 
+							if (existe && c1.getCampo().equals(c2.getCampo())) {
+								if (!c1.getCampo().equals(c2.getCampo())) {
+									identica = false;
+									panel += "    - El nombre del campo " + c1.getCampo() + " cambia por "
+											+ c2.getCampo() + "<br>";
+								}
+								if (!c1.getTipo().equals(c2.getTipo())) {
+									identica = false;
+									panel += "    - El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
+											+ " a " + c2.getTipo() + "<br>";
+								}
+								if (!c1.getValor().equals(c2.getValor())) {
+									identica = false;
+									panel += "    - El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
+											+ " a " + c2.getValor() + "<br>";
+								}
+							} else {
+								j = col1.size();
+							}
 						}
 						if (identica) {
-							panel += "ES IDÉNTICA\n";
+							panel += "&#10004; ES IDÉNTICA\n";
+						} else {
+
 						}
 					}
 				}
@@ -172,13 +179,13 @@ public class CompararBD {
 		for (int i = 0; i < nombreTablas2.size(); i++) {
 			if (!b.contains(nombreTablas2.get(i).getNombre())) {
 				panel += "<h2 style=\"background-color:#ABEBC6;\">" + nombreTablas2.get(i).getNombre()
-						+ "</h2>NUEVA TABLA";
+						+ "</h2>&#10069; NUEVA TABLA";
 			}
 		}
 		for (int i = 0; i < nombreTablas.size(); i++) {
 			if (!a.contains(nombreTablas.get(i).getNombre())) {
 				panel += "<h2 style=\"background-color:#85C1E9;\">" + nombreTablas.get(i).getNombre()
-						+ "</h2>NO EXISTE LA TABLA";
+						+ "</h2>&#x2757; NO EXISTE LA TABLA";
 			}
 		}
 		return panel;
