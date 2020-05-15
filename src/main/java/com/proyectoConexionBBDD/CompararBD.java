@@ -6,13 +6,13 @@ import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 
+import model.Columna;
+import model.Tab;
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Elements;
 import nu.xom.ParsingException;
-import pruebas.Columna;
-import pruebas.Tab;
 
 public class CompararBD {
 
@@ -59,7 +59,39 @@ public class CompararBD {
 
 			}
 
-			Tab tabla1 = new Tab(nombreTabla, arrayColumnas);
+			Elements primaryKeyElement = table.getChildElements("primaryKey");
+			ArrayList<String> pks = new ArrayList<String>();
+			for (int j = 0; j < primaryKeyElement.size(); j++) {
+				Element pk = primaryKeyElement.get(j);
+
+				Element pkElement = pk.getFirstChildElement("nombre");
+
+				pks.add(pkElement.getValue());
+
+			}
+
+			Elements foreignKeyElement = table.getChildElements("foreignKey");
+			ArrayList<String> fks = new ArrayList<String>();
+			for (int j = 0; j < foreignKeyElement.size(); j++) {
+				Element fk = foreignKeyElement.get(j);
+
+				Element fkElement = fk.getFirstChildElement("nombre");
+
+				fks.add(fkElement.getValue());
+
+			}
+			Elements triggerElement = table.getChildElements("trigger");
+			ArrayList<String> triggers = new ArrayList<String>();
+			for (int j = 0; j < triggerElement.size(); j++) {
+				Element trigger = triggerElement.get(j);
+
+				Element tElement = trigger.getFirstChildElement("nombre");
+
+				triggers.add(tElement.getValue());
+
+			}
+
+			Tab tabla1 = new Tab(nombreTabla, arrayColumnas, pks, fks, triggers);
 			nombreTablas.add(tabla1);
 
 		}
@@ -75,7 +107,6 @@ public class CompararBD {
 		try {
 			doc2 = builder2.build(fichero);
 		} catch (ParsingException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -109,7 +140,40 @@ public class CompararBD {
 
 			}
 
-			Tab tabla1 = new Tab(nombreTabla2, arrayColumnas2);
+			Elements primaryKeyElement = table.getChildElements("primaryKey");
+
+			ArrayList<String> pks = new ArrayList<String>();
+			for (int j = 0; j < primaryKeyElement.size(); j++) {
+				Element pk = primaryKeyElement.get(j);
+
+				Element pkElement = pk.getFirstChildElement("nombre");
+
+				pks.add(pkElement.getValue());
+
+			}
+
+			Elements foreignKeyElement = table.getChildElements("foreignKey");
+			ArrayList<String> fks = new ArrayList<String>();
+			for (int j = 0; j < foreignKeyElement.size(); j++) {
+				Element fk = foreignKeyElement.get(j);
+
+				Element fkElement = fk.getFirstChildElement("nombre");
+
+				fks.add(fkElement.getValue());
+
+			}
+
+			Elements triggerElement = table.getChildElements("trigger");
+			ArrayList<String> triggers = new ArrayList<String>();
+			for (int j = 0; j < triggerElement.size(); j++) {
+				Element trigger = triggerElement.get(j);
+
+				Element tElement = trigger.getFirstChildElement("nombre");
+
+				triggers.add(tElement.getValue());
+
+			}
+			Tab tabla1 = new Tab(nombreTabla2, arrayColumnas2, pks, fks, triggers);
 			nombreTablas2.add(tabla1);
 
 		}
@@ -143,30 +207,55 @@ public class CompararBD {
 
 							c1 = col1.get(j);
 							c2 = col2.get(j);
-
-							boolean existe = nombreCol.contains(c2.getCampo());
+							boolean existe = true;
+							for (int i = 0; i < col2.size(); i++) {
+								if (!nombreCol.contains(c2.getCampo())) {
+									existe = false;
+									i = col2.size();
+								}
+							}
 
 							if (existe && c1.getCampo().equals(c2.getCampo())) {
 								if (!c1.getCampo().equals(c2.getCampo())) {
 									identica = false;
-									panel += "    - El nombre del campo " + c1.getCampo() + " cambia por "
-											+ c2.getCampo() + "<br>";
+									panel += "- El nombre del campo " + c1.getCampo() + " cambia por " + c2.getCampo()
+											+ "<br>";
 								}
 								if (!c1.getTipo().equals(c2.getTipo())) {
 									identica = false;
-									panel += "    - El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
+									panel += "- El tipo del campo " + c1.getCampo() + " cambia de " + c1.getTipo()
 											+ " a " + c2.getTipo() + "<br>";
 								}
 								if (!c1.getValor().equals(c2.getValor())) {
 									identica = false;
-									panel += "    - El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
+									panel += "- El valor del campo " + c1.getCampo() + " cambia de " + c1.getValor()
 											+ " a " + c2.getValor() + "<br>";
 								}
 							} else {
 								j = col1.size();
 							}
 						}
-						if (identica) {
+						Boolean pkIdentica = false;
+						if (t1.getPk().equals(t2.getPk())) {
+							pkIdentica = true;
+						} else {
+							panel += "- No tienen la misma PK.<br>";
+						}
+
+						Boolean fkIdentica = false;
+						if (t1.getFk().equals(t2.getFk())) {
+							fkIdentica = true;
+						} else {
+							panel += "- No tienen la misma FK.<br>";
+						}
+						Boolean triggerIdentica = false;
+						if (t1.getTrigger().equals(t2.getTrigger())) {
+							triggerIdentica = true;
+						} else {
+							panel += "- No tienen la misma FK.<br>";
+						}
+
+						if (identica && pkIdentica && fkIdentica && triggerIdentica) {
 							panel += "&#10004; ES IDÉNTICA\n";
 						} else {
 

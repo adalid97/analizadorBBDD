@@ -214,8 +214,22 @@ public class App extends JFrame {
 								String sqlTrigger = "select trigger_name, triggering_event from ALL_TRIGGERS WHERE TABLE_NAME = '"
 										+ tablas.get(i) + "'";
 
+								String sqlTamanoTabla = "SELECT SUM (BYTES) / (1024*1024) FROM user_segments WHERE segment_type = 'TABLE' and segment_name = '"
+										+ tablas.get(i) + "' GROUP BY segment_name";
+
 								Element tablaElement = new Element("tabla");
 								Element nombreTablaElement = new Element("nombreTabla");
+
+								ResultSet resultTamanoTabla = statement.executeQuery(sqlTamanoTabla);
+								String tamanoTabla = "";
+								while (resultTamanoTabla.next()) {
+									for (int x = 1; x <= resultTamanoTabla.getMetaData().getColumnCount(); x++)
+										tamanoTabla = resultTamanoTabla.getString(x) + "";
+								}
+
+								Element tamanoTablaElement = new Element("tamañoTabla");
+								tablaElement.appendChild(tamanoTablaElement);
+								tamanoTablaElement.appendChild(tamanoTabla);
 
 								tablaElement.appendChild(nombreTablaElement);
 								nombreTablaElement.appendChild(tablas.get(i));
@@ -896,9 +910,10 @@ public class App extends JFrame {
 			Elements columnaElement = table.getChildElements("columna");
 
 			Element nombreTablaElement = table.getFirstChildElement("nombreTabla");
-			String nombreTabla;
-			nombreTabla = nombreTablaElement.getValue();
-			panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + "</h2>";
+			Element tamanoTablaElement = table.getFirstChildElement("tamañoTabla");
+			String nombreTabla = nombreTablaElement.getValue();
+			String tamañoTabla = tamanoTablaElement.getValue();
+			panel += "<h2 style=\"background-color:#FDEDEC;\">" + nombreTabla + " (" + tamañoTabla + " Mb)</h2>";
 
 			for (int j = 0; j < columnaElement.size(); j++) {
 				Element columnas = columnaElement.get(j);

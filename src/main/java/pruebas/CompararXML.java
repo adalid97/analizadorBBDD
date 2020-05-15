@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import model.Columna;
+import model.Tab;
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
