@@ -418,8 +418,22 @@ public class App extends JFrame {
 								String sqlTrigger = "SELECT sysobjects.name AS trigger_name, OBJECT_NAME(parent_obj) AS table_name FROM sysobjects INNER JOIN sys.tables t ON sysobjects.parent_obj = t.object_id INNER JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE sysobjects.type = 'TR' AND OBJECT_NAME(parent_obj) = '"
 										+ tablas.get(i) + "'";
 
+								String sqlTamanoTabla = "SELECT s.name + '.' + t.NAME AS TableName, SUM(a.used_pages)*8 AS 'TableSizeKB'  FROM sys.tables t JOIN sys.schemas s on t.schema_id = s.schema_id LEFT JOIN sys.indexes i ON t.OBJECT_ID = i.object_id LEFT JOIN sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id LEFT JOIN sys.allocation_units a ON p.partition_id = a.container_id WHERE t.NAME = '"
+										+ tablas.get(i) + "' GROUP BY s.name, t.name";
+
 								Element tablaElement = new Element("tabla");
 								Element nombreTablaElement = new Element("nombreTabla");
+
+								ResultSet resultTamanoTabla = statement.executeQuery(sqlTamanoTabla);
+								String tamanoTabla = "";
+								while (resultTamanoTabla.next()) {
+									for (int x = 1; x <= resultTamanoTabla.getMetaData().getColumnCount(); x++)
+										tamanoTabla = resultTamanoTabla.getString(x) + "";
+								}
+
+								Element tamanoTablaElement = new Element("tamañoTabla");
+								tablaElement.appendChild(tamanoTablaElement);
+								tamanoTablaElement.appendChild(tamanoTabla);
 
 								tablaElement.appendChild(nombreTablaElement);
 								nombreTablaElement.appendChild(tablas.get(i));
@@ -975,9 +989,7 @@ public class App extends JFrame {
 						+ referenciaFKElement.getValue() + "<br>";
 
 			}
-
 		}
 		return panel;
-
 	}
 }

@@ -85,10 +85,7 @@ public class LeerDatosOracle {
 						+ referenciaFKElement.getValue() + "<br>";
 
 			}
-
 		}
-
 		return panel;
-
 	}
 }
